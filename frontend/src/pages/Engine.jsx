@@ -1,16 +1,126 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 
 const Engine = () => {
+  const [file, setFile] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleBrowseClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleReset = () => {
+    setFile(null);
+  };
+
+  if (!file) {
+    return (
+      <div className="p-8 h-[calc(100vh-8rem)] flex flex-col items-center justify-center">
+        <div className="w-full max-w-3xl">
+          <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200/50">
+              <span className="material-symbols-outlined text-3xl text-slate-600" style={{ fontVariationSettings: "'FILL' 1" }}>policy</span>
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">Deepfake Forensic Scan</h1>
+            <p className="text-slate-500 font-medium">Upload media for AI analysis. Secure detection pipeline active.</p>
+          </div>
+          
+          <div 
+            className={`relative border-2 border-dashed rounded-[2rem] p-16 transition-all duration-300 flex flex-col items-center justify-center text-center cursor-pointer group overflow-hidden ${
+              isDragOver 
+                ? 'border-primary-container bg-primary-container/5 shadow-[0_0_30px_rgba(0,107,133,0.15)] scale-[1.02]' 
+                : 'border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleBrowseClick}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleFileChange}
+              accept="image/*,video/*,audio/*"
+            />
+            
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 transition-all duration-300 ${
+              isDragOver ? 'bg-primary-container text-white scale-110' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700 shadow-sm'
+            }`}>
+              <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                {isDragOver ? 'file_download' : 'cloud_upload'}
+              </span>
+            </div>
+            
+            <h3 className={`text-xl font-bold mb-2 transition-colors ${isDragOver ? 'text-primary' : 'text-slate-900'}`}>
+              {isDragOver ? 'Drop media to scan' : 'Drag & drop media here'}
+            </h3>
+            <p className="text-sm font-medium text-slate-500 mb-8 max-w-sm">
+              or click to browse your encrypted file system
+            </p>
+            
+            <div className="flex gap-4 opacity-70">
+              <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
+                <span className="material-symbols-outlined text-[14px]">smart_display</span> Video
+              </span>
+              <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
+                <span className="material-symbols-outlined text-[14px]">image</span> Image
+              </span>
+              <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
+                <span className="material-symbols-outlined text-[14px]">graphic_eq</span> Audio
+              </span>
+            </div>
+          </div>
+          
+          <div className="mt-8 flex items-center justify-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">
+            <span className="material-symbols-outlined text-sm">lock</span>
+            Files are analyzed locally and never stored
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8">
+    <div className="p-8 animate-in fade-in duration-500">
+      <div className="flex items-center gap-4 mb-4">
+        <button onClick={handleReset} className="w-8 h-8 flex items-center justify-center border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-full transition-colors text-slate-500 hover:text-slate-900 active:scale-95">
+          <span className="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cancel Scan</span>
+      </div>
       <div className="flex justify-between items-end mb-8">
         <div>
           <nav className="flex gap-2 text-xs font-medium text-slate-400 mb-2">
-            <span>Analysis</span>
+            <span>Scan Engine</span>
             <span>/</span>
             <span className="text-slate-900">Active Scan</span>
           </nav>
-          <h1 className="text-3xl font-extrabold tracking-tight">Deep_Archive_Scan_X.mp4</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{file.name}</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">Processing hash: 8f2c...4e1a • Source: Secure Uplink 04</p>
         </div>
         <div className="flex gap-3">
