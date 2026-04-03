@@ -1,4 +1,9 @@
 # Ignition Hackverse (DecodeX-)
+TEAM MEMBERS
+1) Shubham More
+2) Krishna Jadhav
+3) Omraj Bhingale
+4) Pranav Kale
 
 A simple, powerful project built for the Hackverse Hackathon.
 
