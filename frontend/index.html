@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecodeX | AI Detection</title>
+    <meta name="description" content="State-of-the-art AI system to detect deepfakes. Pure monochrome.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 🌑 Header -->
+        <header>
+            <h1>DECODEX</h1>
+            <p>Verification protocol 2.0</p>
+        </header>
+
+        <!-- 🖼️ Nexus Upload -->
+        <div id="nexus-container">
+            <div class="nexus-zone" id="drop-zone">
+                <i class="fa-solid fa-plus-square"></i>
+                <p>Initialize scan</p>
+                <input type="file" id="file-input" accept="image/*,video/*,audio/*" hidden>
+            </div>
+        </div>
+
+        <!-- 🎥 Preview Stage (Initially Hidden) -->
+        <div class="preview-stage hidden" id="preview-stage">
+            <div class="media-preview-container" id="media-preview">
+                <!-- Media injected here -->
+            </div>
+            
+            <div id="action-zone">
+                <div class="progress-track" id="progress-track">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                
+                <div class="micro-logs" id="micro-logs">
+                    <!-- Logs injected here -->
+                </div>
+
+                <div style="display: flex; gap: 16px; margin-top: 32px;">
+                    <button class="btn" style="flex: 1;" id="btn-cancel">Abort</button>
+                    <button class="btn btn-primary" style="flex: 2;" id="btn-analyze">Run Analysis</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📉 Result Dashboard (Initially Hidden) -->
+        <div class="verdict-header hidden" id="verdict-dashboard">
+            <div class="status-label" id="status-label">Protocol Verdict</div>
+            <h2 class="final-verdict" id="final-verdict">REAL</h2>
+            <div class="confidence-score" id="confidence-score">Confidence: 98%</div>
+            
+            <button class="btn btn-primary" id="btn-reset">New Session</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

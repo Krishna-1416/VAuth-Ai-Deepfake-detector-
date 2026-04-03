@@ -1,0 +1,217 @@
+/**
+ * Obsidian Slate - Monochrome Minimalist Design System
+ * ---------------------------------------------------
+ * Palette: #000 (BG), #FFF (Text), #222 (Borders), #888 (Secondary)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&display=swap');
+
+:root {
+  --bg-pure: #000000;
+  --bg-surface: #0a0a0a;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --border-dim: #262626;
+  --border-high: #ffffff;
+  --accent: #ffffff;
+  --status-real: #ffffff;
+  --status-fake: #ffffff;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains+Mono', monospace;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-pure);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 60px 20px;
+}
+
+.container {
+  max-width: 600px;
+  width: 100%;
+}
+
+/* --- Typography --- */
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+/* --- The Nexus (Upload Zone) --- */
+
+.nexus-zone {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  padding: 60px 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.nexus-zone:hover, .nexus-zone.dragover {
+  border-color: var(--border-high);
+}
+
+.nexus-zone i {
+  font-size: 2.5rem;
+  margin-bottom: 24px;
+}
+
+.nexus-zone p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* --- Preview Stage --- */
+
+.preview-stage {
+  margin-top: 32px;
+  width: 100%;
+}
+
+.media-preview-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background-color: #050505;
+  border: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.media-preview-container img, 
+.media-preview-container video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* --- Progress Engine --- */
+
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background-color: var(--border-dim);
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  background-color: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.micro-logs {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  height: 60px;
+  overflow-y: hidden;
+}
+
+.log-entry { opacity: 0; animation: log-fade 0.3s forwards; margin-bottom: 4px; }
+@keyframes log-fade { to { opacity: 1; } }
+
+/* --- Results Dashboard --- */
+
+.verdict-header {
+  text-align: center;
+  border-top: 1px solid var(--border-dim);
+  padding-top: 48px;
+  margin-top: 48px;
+}
+
+.status-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.final-verdict {
+  font-size: 6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.08em;
+  margin-bottom: 24px;
+}
+
+.confidence-score {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  margin-bottom: 48px;
+}
+
+/* --- Buttons --- */
+
+.btn {
+  background: none;
+  border: 1px solid var(--border-dim);
+  color: var(--text-primary);
+  padding: 14px 28px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.btn:hover {
+  background-color: var(--text-primary);
+  color: var(--bg-pure);
+  border-color: var(--text-primary);
+}
+
+.btn-primary {
+  width: 100%;
+  background-color: var(--text-primary);
+  color: var(--bg-pure);
+  border-color: var(--text-primary);
+}
+
+.btn-primary:border { border-color: var(--border-high); }
+.btn-primary:hover { opacity: 0.9; }
+
+.hidden { display: none !important; }
+
+/* --- Utils --- */
+
+@media (max-width: 768px) {
+  h1 { font-size: 2rem; }
+  .final-verdict { font-size: 4rem; }
+}
