@@ -7,6 +7,7 @@ const Engine = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [progress, setProgress] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const fileInputRef = useRef(null);
 
   // Simulate progress steps for a better UX during analysis
@@ -22,12 +23,61 @@ const Engine = () => {
     return () => clearInterval(interval);
   }, [isAnalyzing]);
 
-  const handleFileChange = (e) => {
+  const normalizeImage = (file) => {
+    return new Promise((resolve) => {
+      // Only normalize images
+      if (!file.type.startsWith('image/')) return resolve(file);
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max 2000px for forensic performance balance
+          const MAX_SIZE = 2000;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            const normalizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(normalizedFile);
+          }, 'image/jpeg', 0.92);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      setIsDownloading(true);
+      const normalized = await normalizeImage(file);
+      setSelectedFile(normalized);
+      setPreviewUrl(URL.createObjectURL(normalized));
       setAnalysisResult(null);
+      setIsDownloading(false);
     }
   };
 
@@ -41,14 +91,45 @@ const Engine = () => {
     setIsDragOver(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragOver(false);
+    
+    // 1. Handle local files
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      setIsDownloading(true);
+      const normalized = await normalizeImage(file);
+      setSelectedFile(normalized);
+      setPreviewUrl(URL.createObjectURL(normalized));
       setAnalysisResult(null);
+      setIsDownloading(false);
+      return;
+    }
+
+    // 2. Handle remote URLs (e.g. dragged from Unsplash/other tabs)
+    const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('URL');
+    if (url) {
+      setIsDownloading(true);
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        
+        // Extract filename from URL or default
+        const filename = url.split('/').pop().split('?')[0] || 'remote-image.jpg';
+        const rawFile = new File([blob], filename, { type: blob.type });
+        
+        // Normalize to JPEG for max compatibility
+        const normalized = await normalizeImage(rawFile);
+        setSelectedFile(normalized);
+        setPreviewUrl(URL.createObjectURL(normalized));
+        setAnalysisResult(null);
+      } catch (err) {
+        console.error("Failed to download dropped image:", err);
+        alert("Could not load image from this URL. Try saving it first.");
+      } finally {
+        setIsDownloading(false);
+      }
     }
   };
 
@@ -123,6 +204,13 @@ const Engine = () => {
               onChange={handleFileChange}
               accept="image/*,video/*,audio/*"
             />
+            
+             {isDownloading && (
+              <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex flex-col items-center justify-center animate-in fade-in duration-300">
+                <div className="w-12 h-12 border-4 border-primary-container border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Bridging remote media...</p>
+              </div>
+            )}
             
             <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 transition-all duration-300 ${
               isDragOver ? 'bg-primary-container text-white scale-110' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700 shadow-sm'
@@ -240,13 +328,33 @@ const Engine = () => {
           <div className="bg-surface-container-lowest rounded-xl p-8 flex items-center gap-12 border border-surface-container-high shadow-sm">
             <div className="flex-1">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-manrope font-bold text-slate-900 uppercase tracking-widest text-xs">
-                  {isAnalyzing ? "Processing neural layers 3/4" : analysisResult ? "Scan Report Ready" : "System Standby"}
+                <h3 className={`font-manrope font-bold uppercase tracking-widest text-xs ${
+                  analysisResult ? (
+                    analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'text-red-600' :
+                    analysisResult.prediction.includes('Manipulated') ? 'text-error' : 'text-emerald-600'
+                  ) : 'text-slate-900'
+                }`}>
+                  {isAnalyzing ? "Processing neural layers 3/4" : analysisResult ? "Forensic Authenticity Confirmed" : "System Standby"}
                 </h3>
-                <span className="text-xs font-bold text-primary-container">{Math.round(progress)}%</span>
+                <span className={`text-xs font-bold ${
+                  analysisResult ? (
+                    analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'text-red-500' :
+                    analysisResult.prediction.includes('Manipulated') ? 'text-error' : 'text-emerald-500'
+                  ) : 'text-primary-container'
+                }`}>
+                  {analysisResult ? `${Math.round(analysisResult.confidence * 100)}% Confidence` : `${Math.round(progress)}%`}
+                </span>
               </div>
               <div className="h-3 w-full bg-surface-container-high rounded-full overflow-hidden p-0.5">
-                <div className="h-full bg-primary-container rounded-full transition-all duration-700" style={{ width: `${progress}%` }}></div>
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    analysisResult ? (
+                      analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'bg-red-500' :
+                      analysisResult.prediction.includes('Manipulated') ? 'bg-error' : 'bg-emerald-500'
+                    ) : 'bg-primary-container'
+                  }`} 
+                  style={{ width: analysisResult ? `${analysisResult.confidence * 100}%` : `${progress}%` }}
+                ></div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-8 border-l border-surface-container-high pl-12">
@@ -257,10 +365,24 @@ const Engine = () => {
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Confidence</p>
-                <p className={`text-2xl font-extrabold ${analysisResult?.prediction === 'Fake' ? 'text-error' : 'text-tertiary-fixed'}`}>
-                  {analysisResult ? `${(analysisResult.confidence * 100).toFixed(1)}%` : "--"}
-                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Prediction</p>
+                <div className="flex items-center gap-2">
+                  <span className={`text-2xl font-extrabold ${
+                    analysisResult?.prediction?.includes('Diffusion') ? 'text-blue-500' : 
+                    analysisResult?.prediction?.includes('Manipulated') ? 'text-error' : 'text-emerald-500'
+                  }`}>
+                    {analysisResult?.prediction || "--"}
+                  </span>
+                  {analysisResult && (
+                    <span className={`material-symbols-outlined ${
+                      analysisResult.prediction.includes('Diffusion') ? 'text-blue-500' : 
+                      analysisResult.prediction.includes('Manipulated') ? 'text-error' : 'text-emerald-500'
+                    }`}>
+                      {analysisResult.prediction.includes('Diffusion') ? 'magic_button' : 
+                       analysisResult.prediction.includes('Manipulated') ? 'warning' : 'verified'}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -285,35 +407,121 @@ const Engine = () => {
 
               {analysisResult && (
                 <>
-                  <div className={`p-4 bg-surface-container-low rounded-lg border-l-4 shadow-sm ${analysisResult.prediction === 'Fake' ? 'border-error' : 'border-tertiary-fixed'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        analysisResult.prediction === 'Fake' 
-                        ? 'text-error bg-error-container/50' 
-                        : 'text-on-tertiary-container bg-tertiary-fixed/50'
-                      }`}>
-                        {analysisResult.prediction.toUpperCase()}
-                      </span>
-                      <span className="text-[10px] font-mono text-slate-400">JUDGMENT</span>
+                  {/* ── Verdict card with confidence bar ── */}
+                  <div className={`p-4 rounded-lg border-l-4 shadow-sm ${
+                      analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                        ? 'bg-red-50 border-red-500'
+                        : analysisResult.prediction.includes('Manipulated')
+                        ? 'bg-error-container/10 border-error'
+                        : 'bg-emerald-50 border-emerald-500'
+                    }`}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                          analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                            ? 'text-red-600'
+                            : analysisResult.prediction.includes('Manipulated')
+                            ? 'text-error'
+                            : 'text-emerald-600'
+                        }`}>
+                          Verdict: {analysisResult.prediction}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {(analysisResult.confidence * 100).toFixed(1)}%
+                        </span>
+                      </div>
+
+                      {/* Mini confidence bar */}
+                      <div className="h-1.5 w-full bg-white/70 rounded-full overflow-hidden my-2">
+                        <div
+                          className={`h-full rounded-full transition-all duration-1000 ${
+                            analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                              ? 'bg-red-500'
+                              : analysisResult.prediction.includes('Manipulated')
+                              ? 'bg-error'
+                              : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${Math.round(analysisResult.confidence * 100)}%` }}
+                        />
+                      </div>
+
+                      <p className="text-xs text-slate-600 mt-2 leading-relaxed font-medium">
+                        {analysisResult.explanation}
+                      </p>
                     </div>
-                    <p className="text-sm font-semibold text-slate-900 leading-tight">
-                      Classification: {analysisResult.prediction}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-2 leading-relaxed font-medium">
-                      {analysisResult.explanation}
-                    </p>
-                  </div>
+
+                  {/* Quality Tier Badge */}
+                  {analysisResult.quality_tier && analysisResult.quality_tier !== 'high' && (
+                    <div className={`p-3 rounded-lg flex items-center gap-2.5 border ${
+                      analysisResult.quality_tier === 'low'
+                        ? 'bg-slate-100 border-slate-300'
+                        : analysisResult.quality_tier === 'old'
+                        ? 'bg-amber-50 border-amber-300'
+                        : 'bg-blue-50 border-blue-200'
+                    }`}>
+                      <span className={`material-symbols-outlined text-[18px] ${
+                        analysisResult.quality_tier === 'old' ? 'text-amber-500' : 'text-blue-400'
+                      }`}>
+                        {analysisResult.quality_tier === 'old' ? 'history_edu' : 'deblur'}
+                      </span>
+                      <div>
+                        <p className={`text-[10px] font-bold uppercase tracking-widest ${
+                          analysisResult.quality_tier === 'old' ? 'text-amber-600' : 'text-blue-600'
+                        }`}>
+                          {analysisResult.quality_tier === 'old' ? 'Old / Film Photo Detected' :
+                           analysisResult.quality_tier === 'low'  ? 'Very Low Quality Image' :
+                           'Blurry Image Detected'}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          {analysisResult.quality_tier === 'old'
+                            ? 'Frequency signals suppressed. HF model weighted at 75%.'
+                            : analysisResult.quality_tier === 'low'
+                            ? 'Heuristics unreliable. HF model weighted at 85%.'
+                            : 'FFT/Wavelet suppressed. HF model weighted at 72%.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary-container shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-bold text-white bg-primary-container px-1.5 py-0.5 rounded">FORENSIC_TAG</span>
-                      <span className="text-[10px] font-mono text-slate-400">DETAIL</span>
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="text-[10px] font-bold text-white bg-primary-container px-1.5 py-0.5 rounded">ENSEMBLE_BREAKDOWN</span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {analysisResult.quality_tier === 'high' || !analysisResult.quality_tier ? '4 METHODS' : `ADAPTIVE · ${(analysisResult.quality_tier || '').toUpperCase()}`}
+                      </span>
                     </div>
-                    <p className="text-sm font-semibold text-slate-900">Neural Synthesis Residuals</p>
-                    <p className="text-xs text-slate-500 mt-2 leading-relaxed font-medium">
-                      Analysis complete. Hybrid Trust Score: {(analysisResult.confidence * 100).toFixed(2)}%. 
-                      Spectral Analysis (60%) combined with Spatial Xception features (40%).
-                    </p>
+                    {analysisResult.breakdown && (
+                      <div className="space-y-2.5">
+                        {[
+                          { key: 'diffusion_score',    label: 'Diffusion Origin',     icon: 'magic_button' },
+                          { key: 'manipulation_score', label: 'Semantic Manipulation', icon: 'masks' },
+                          { key: 'realism_score',      label: 'Realism Consistency',  icon: 'visibility' },
+                          { key: 'fourier_spectral',   label: 'Spectral Marker (FFT)',icon: 'graphic_eq' },
+                        ].map(({ key, label, icon }) => {
+                          const val = analysisResult.breakdown[key] ?? 0;
+                          const pct = Math.round(val * 100);
+                          const isFake = val >= 0.4;
+                          return (
+                            <div key={key}>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-600">
+                                  <span className="material-symbols-outlined text-[12px]">{icon}</span>
+                                  {label}
+                                </span>
+                                <span className={`text-[10px] font-bold ${isFake ? 'text-error' : 'text-tertiary-fixed'}`}>
+                                  {pct}%
+                                </span>
+                              </div>
+                              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-700 ${isFake ? 'bg-error' : 'bg-tertiary-fixed'}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -336,58 +544,45 @@ const Engine = () => {
         </div>
       </div>
       
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-surface-container-lowest p-6 rounded-xl space-y-4 border border-surface-container-high">
-          <h4 className="font-manrope font-bold text-slate-950 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary-container">camera</span>
-            Spatial Accuracy
-          </h4>
-          <div className="space-y-3">
-             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">Lighting Invariants</span>
-              <span className={`font-semibold ${analysisResult ? (analysisResult.prediction === 'Fake' ? 'text-error' : 'text-tertiary-fixed') : 'text-slate-400'}`}>
-                {analysisResult ? (analysisResult.prediction === 'Fake' ? 'Anomalous' : 'Nominal') : "--"}
-              </span>
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { key: 'diffusion_score',    label: 'Diffusion Score',       icon: 'magic_button', weight: 'SOTA' },
+          { key: 'manipulation_score', label: 'Manipulation Score',    icon: 'masks',        weight: 'SOTA' },
+          { key: 'realism_score',      label: 'Natural Consistency',   icon: 'visibility',   weight: 'SOTA' },
+          { key: 'fourier_spectral',   label: 'Physical Evidence',     icon: 'graphic_eq',   weight: 'FFT' },
+        ].map(({ key, label, icon, weight }) => {
+          const val = analysisResult?.breakdown?.[key];
+          const pct = val !== undefined ? Math.round(val * 100) : null;
+          const isFake = pct !== null && pct >= 40;
+          return (
+            <div key={key} className="bg-surface-container-lowest p-6 rounded-xl space-y-4 border border-surface-container-high">
+              <div className="flex justify-between items-start">
+                <h4 className="font-manrope font-bold text-slate-950 flex items-center gap-2 text-sm">
+                  <span className="material-symbols-outlined text-primary-container text-[18px]">{icon}</span>
+                  {label}
+                </h4>
+                <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-widest">{weight}</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-500">Anomaly Score</span>
+                  <span className={`text-sm font-extrabold ${pct !== null ? (isFake ? 'text-error' : 'text-tertiary-fixed') : 'text-slate-300'}`}>
+                    {pct !== null ? `${pct}%` : '--'}
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 ${isFake ? 'bg-error' : 'bg-primary-container'}`}
+                    style={{ width: pct !== null ? `${pct}%` : '0%' }}
+                  />
+                </div>
+                <p className="text-[9px] font-bold text-slate-400 text-center tracking-widest uppercase">
+                  {pct !== null ? (isFake ? '⚡ Artifact detected' : '✓ Clean') : 'Awaiting scan'}
+                </p>
+              </div>
             </div>
-            <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-slate-400" style={{ width: analysisResult ? '75%' : '0%' }}></div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-surface-container-lowest p-6 rounded-xl space-y-4 border border-surface-container-high">
-          <h4 className="font-manrope font-bold text-slate-950 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary-container">memory</span>
-            Spectral Analysis
-          </h4>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">Fourier Residuals</span>
-              <span className={`font-semibold ${analysisResult ? (analysisResult.prediction === 'Fake' ? 'text-error' : 'text-primary-container') : 'text-slate-400'}`}>
-                 {analysisResult ? (analysisResult.prediction === 'Fake' ? 'High Cluster' : 'Baseline') : "--"}
-              </span>
-            </div>
-            <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-slate-400" style={{ width: analysisResult ? '92%' : '0%' }}></div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-surface-container-lowest p-6 rounded-xl space-y-4 border border-surface-container-high ring-1 ring-primary-container/10">
-          <h2 className="font-manrope font-bold text-slate-950 flex items-center gap-2 uppercase text-xs tracking-widest">
-            <span className="material-symbols-outlined text-primary-container">verified_user</span>
-            System Trust Score
-          </h2>
-          <div className="space-y-3">
-            <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden shadow-inner">
-               <div className={`h-full transition-all duration-1000 ${analysisResult?.prediction === 'Fake' ? 'bg-error' : 'bg-primary-container'}`} 
-                    style={{ width: analysisResult ? `${analysisResult.confidence * 100}%` : '0%' }}></div>
-            </div>
-            <p className="text-[10px] font-bold text-slate-400 text-center tracking-[0.3em] font-mono">
-              SENTINEL CORE v1.0
-            </p>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );
