@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Forensic Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#6ffbbe",
+                      "error": "#ba1a1a",
+                      "tertiary": "#000000",
+                      "primary-container": "#001453",
+                      "surface-container-high": "#e6e8ea",
+                      "error-container": "#ffdad6",
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#2d3133",
+                      "surface-dim": "#d8dadc",
+                      "secondary": "#515f74",
+                      "primary": "#000000",
+                      "on-primary-fixed": "#001453",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-secondary-container": "#57657a",
+                      "secondary-fixed": "#d5e3fc",
+                      "on-surface": "#191c1e",
+                      "surface-container-low": "#f2f4f6",
+                      "on-primary-container": "#607cec",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-background": "#191c1e",
+                      "surface-container-highest": "#e0e3e5",
+                      "surface-tint": "#3755c3",
+                      "surface-bright": "#f7f9fb",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed-variant": "#173bab",
+                      "background": "#f7f9fb",
+                      "outline": "#76777d",
+                      "tertiary-container": "#002113",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "primary-fixed": "#dde1ff",
+                      "outline-variant": "#c6c6cd",
+                      "surface-container": "#eceef0",
+                      "on-tertiary": "#ffffff",
+                      "surface-variant": "#e0e3e5",
+                      "on-surface-variant": "#45464d",
+                      "secondary-container": "#d5e3fc",
+                      "on-tertiary-container": "#009668",
+                      "on-secondary-fixed-variant": "#3a485b",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "primary-fixed-dim": "#b8c4ff",
+                      "inverse-primary": "#b8c4ff",
+                      "secondary-fixed-dim": "#b9c7df",
+                      "on-tertiary-fixed": "#002113",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#f7f9fb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .grid-overlay {
+            background-image: radial-gradient(circle, #c6c6cd 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            opacity: 0.1;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(40px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased overflow-hidden">
+<!-- Subtle Technical Background Overlay -->
+<div class="fixed inset-0 z-0 pointer-events-none">
+<div class="absolute inset-0 bg-[#000a1f]"></div> <!-- Deep slate foundation -->
+<div class="absolute inset-0 grid-overlay"></div>
+<div class="absolute top-0 right-0 w-[800px] h-[800px] bg-primary-container opacity-20 blur-[120px] -translate-y-1/2 translate-x-1/2 rounded-full"></div>
+<div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-surface-tint opacity-10 blur-[100px] translate-y-1/2 -translate-x-1/4 rounded-full"></div>
+</div>
+<main class="relative z-10 flex flex-col items-center justify-center min-h-screen p-6">
+<!-- Brand Identity Header -->
+<header class="mb-12 text-center">
+<div class="inline-flex items-center justify-center mb-6 w-16 h-16 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="shield_person">shield_person</span>
+</div>
+<h1 class="font-headline font-extrabold text-4xl tracking-tighter text-white mb-2">Forensic Intelligence</h1>
+<p class="font-label text-slate-400 text-sm tracking-widest uppercase">Digital Integrity Terminal</p>
+</header>
+<!-- Centered Login Card -->
+<div class="w-full max-w-md">
+<div class="surface-container-lowest bg-white rounded-xl shadow-2xl overflow-hidden border border-white/20">
+<div class="p-8 md:p-10">
+<div class="mb-8">
+<h2 class="font-headline font-bold text-2xl text-primary mb-2">Verification Required</h2>
+<p class="text-secondary font-medium text-sm">Please authenticate to access the investigation archive.</p>
+</div>
+<form class="space-y-6">
+<!-- Analyst ID Field -->
+<div>
+<label class="block font-label font-semibold text-xs text-secondary uppercase mb-2 tracking-wider" for="analyst-id">Analyst ID</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="fingerprint">fingerprint</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-4 bg-surface-container-low border-b-2 border-outline-variant/20 focus:border-primary focus:ring-0 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline/50 font-medium rounded-t-lg" id="analyst-id" name="analyst-id" placeholder="analyst@forensic.intel" required="" type="email"/>
+</div>
+</div>
+<!-- Security Key Field -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<label class="block font-label font-semibold text-xs text-secondary uppercase tracking-wider" for="security-key">Security Key</label>
+<a class="text-xs font-semibold text-primary-container hover:underline decoration-primary-container/30" href="#">Reset Token</a>
+</div>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="key">key</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-4 bg-surface-container-low border-b-2 border-outline-variant/20 focus:border-primary focus:ring-0 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline/50 font-medium rounded-t-lg" id="security-key" name="security-key" placeholder="••••••••••••" required="" type="password"/>
+</div>
+</div>
+<!-- CTA Button -->
+<button class="w-full bg-primary-container hover:bg-black text-white font-headline font-bold py-4 rounded-lg flex items-center justify-center space-x-2 group transition-all duration-300 active:scale-95 shadow-lg shadow-primary-container/20" type="submit">
+<span>Authorize Entry</span>
+<span class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform" data-icon="login">login</span>
+</button>
+</form>
+<div class="mt-8 pt-6 border-t border-surface-container-high flex items-center justify-center space-x-2">
+<p class="text-sm text-secondary">New operative?</p>
+<a class="text-sm font-bold text-primary hover:text-primary-container transition-colors" href="#">Request Access</a>
+</div>
+</div>
+</div>
+<!-- Supporting Text/Links -->
+<div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 px-2">
+<div class="flex items-center space-x-6">
+<a class="text-xs font-semibold text-slate-400 hover:text-white transition-colors" href="#">Protocol v4.2</a>
+<a class="text-xs font-semibold text-slate-400 hover:text-white transition-colors" href="#">Legal Terms</a>
+<a class="text-xs font-semibold text-slate-400 hover:text-white transition-colors" href="#">Contact COBRA</a>
+</div>
+<div class="text-xs text-slate-500 font-mono">
+                    IP: 192.168.1.1 // ENCRYPTED
+                </div>
+</div>
+</div>
+</main>
+<!-- Global Footer Status Indicator -->
+<footer class="fixed bottom-0 w-full p-8 flex justify-center z-10">
+<div class="flex items-center space-x-3 px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/5 rounded-full">
+<div class="relative flex items-center justify-center">
+<span class="absolute w-2.5 h-2.5 bg-tertiary-fixed rounded-full animate-ping opacity-75"></span>
+<span class="relative w-2 h-2 bg-tertiary-fixed rounded-full"></span>
+</div>
+<span class="font-label text-xs font-semibold text-slate-300 tracking-wide">System Status: <span class="text-tertiary-fixed">All Nodes Active</span></span>
+<div class="w-px h-3 bg-white/10 mx-1"></div>
+<span class="font-label text-[10px] text-slate-500 uppercase tracking-widest">Region: US-EAST-VERIFY</span>
+</div>
+</footer>
+<!-- Verification Graphic (Decorative Asymmetry) -->
+<div class="fixed top-24 -left-20 pointer-events-none opacity-20 hidden xl:block">
+<div class="w-96 h-96 border border-white/10 rounded-full flex items-center justify-center">
+<div class="w-64 h-64 border border-white/20 rounded-full flex items-center justify-center">
+<div class="w-32 h-32 border border-white/30 rounded-full"></div>
+</div>
+</div>
+</div>
+</body></html>

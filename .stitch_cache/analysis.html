@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#6ffbbe",
+                        "error": "#ba1a1a",
+                        "tertiary": "#000000",
+                        "primary-container": "#001453",
+                        "surface-container-high": "#e6e8ea",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2d3133",
+                        "surface-dim": "#d8dadc",
+                        "secondary": "#515f74",
+                        "primary": "#000000",
+                        "on-primary-fixed": "#001453",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-secondary-container": "#57657a",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-surface": "#191c1e",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-container": "#607cec",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-background": "#191c1e",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-tint": "#3755c3",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#173bab",
+                        "background": "#f7f9fb",
+                        "outline": "#76777d",
+                        "tertiary-container": "#002113",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "primary-fixed": "#dde1ff",
+                        "outline-variant": "#c6c6cd",
+                        "surface-container": "#eceef0",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "on-surface-variant": "#45464d",
+                        "secondary-container": "#d5e3fc",
+                        "on-tertiary-container": "#009668",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "inverse-primary": "#b8c4ff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "on-tertiary-fixed": "#002113",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f7f9fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl flex justify-between items-center px-8 h-16 w-full border-b border-slate-200/20">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-slate-950">Forensic Intelligence</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-manrope tracking-tight font-semibold text-slate-950 border-b-2 border-slate-950 pb-1" href="#">Analysis</a>
+<a class="font-manrope tracking-tight font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-200" href="#">Archive</a>
+<a class="font-manrope tracking-tight font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-200" href="#">Intelligence</a>
+<a class="font-manrope tracking-tight font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-200" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-100/50 rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-100/50 rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined">shield_person</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User forensic profile" data-alt="Close-up portrait of a professional male forensic analyst in a brightly lit modern office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCi9nYMsTzpCsBvJB8OjK5XhzGsQUep9Pwow2iXOYabFal2wyFVpzKZFjl5L5rtxNg32saxl4-IjURufpqL19-MxTQ160I1QBvUF8jzz0C2tGGUtOtaqCwkEcPrJ8fU7lcH8I9bOo8dpR9a4mPk4x_Vb78cRIFDa0ujzNxSuqtlvj1cPom5rNqY6JeP2e6qE2oVpk31iTtonoYoWKRgiE6is0RwjCm02nk6R5uNG5o42qs_R-wJhi_0j2hZ6IdiKADIIbmoNLK-BOP"/>
+</div>
+</div>
+</header>
+<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-50 flex flex-col p-6 space-y-4 pt-20 border-r border-slate-100 hidden lg:flex">
+<div class="mb-8">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></div>
+<div>
+<p class="text-lg font-bold font-manrope">Terminal 01</p>
+<p class="text-xs font-medium text-slate-500">Verification Active</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 p-3 bg-slate-200/50 text-slate-950 rounded-lg transition-all duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-inter text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-300" href="#">
+<span class="material-symbols-outlined">smart_card_reader</span>
+<span class="font-inter text-sm font-medium">Live Stream</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-300" href="#">
+<span class="material-symbols-outlined">policy</span>
+<span class="font-inter text-sm font-medium">Deepfake Scan</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-300" href="#">
+<span class="material-symbols-outlined">database</span>
+<span class="font-inter text-sm font-medium">Metadata</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-300" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-inter text-sm font-medium">Audit Log</span>
+</a>
+</nav>
+<button class="w-full py-3 bg-primary text-white rounded-lg font-manrope font-semibold text-sm hover:opacity-90 transition-all">
+            New Investigation
+        </button>
+<div class="pt-4 mt-auto border-t border-slate-100 space-y-1">
+<a class="flex items-center gap-3 p-2 text-slate-500 hover:text-slate-900 transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-xs font-medium">Support</span>
+</a>
+<a class="flex items-center gap-3 p-2 text-slate-500 hover:text-slate-900 transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-xs font-medium">Sign Out</span>
+</a>
+</div>
+</aside>
+<main class="lg:pl-64 pt-16 min-h-screen">
+<div class="p-8">
+<div class="flex justify-between items-end mb-8">
+<div>
+<nav class="flex gap-2 text-xs font-medium text-slate-400 mb-2">
+<span>Analysis</span>
+<span>/</span>
+<span class="text-slate-900">Active Scan</span>
+</nav>
+<h1 class="text-3xl font-extrabold tracking-tight">Deep_Archive_Scan_X.mp4</h1>
+<p class="text-sm text-slate-500 mt-1 font-medium">Processing hash: 8f2c...4e1a • Source: Secure Uplink 04</p>
+</div>
+<div class="flex gap-3">
+<span class="px-4 py-2 bg-tertiary-container text-tertiary-fixed rounded-full text-xs font-bold tracking-widest flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed"></span>
+                        LIVE PROCESSING
+                    </span>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-8">
+<div class="col-span-12 xl:col-span-8 space-y-6">
+<div class="relative bg-black rounded-xl overflow-hidden aspect-video shadow-2xl group">
+<img alt="Analysis Video Stream" class="w-full h-full object-cover opacity-60" data-alt="High-tech digital surveillance footage of a dark futuristic city street with glowing blue scanning overlays and data points" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdZcrtY8GQe9P-Vm0D26a_JH1_bm4bKZx7O5cFN3NX_-dmTAtD-Vuf12hy5q-VWkKDGfzvBiQvjDLHGgpQbP9Xo0DaD9khv8Ig9jugFXNYZjPqv5rfhO9B9afLqyuufJ79-LmUQfr5NNqXNpFdjhEXWj1WsCdki81yHBlRArHFIhn5XzQAd_glkpJ1aBu_M_shBbI2KWqiOqdjJl86RDudjyYVXP0dmaJ_bLJDNLeXJjYWILjZ0B5HQhKGH9W4tWCTQESKOun_R_o5"/>
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute top-1/4 left-1/4 w-32 h-32 border-2 border-tertiary-fixed/50 rounded-lg">
+<div class="absolute -top-6 left-0 bg-tertiary-fixed text-tertiary-container text-[10px] px-1.5 py-0.5 font-bold rounded">SUBJECT_ALPHA: 98.4% AUTHENTIC</div>
+<div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-tertiary-fixed"></div>
+<div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-tertiary-fixed"></div>
+</div>
+<div class="absolute top-1/2 right-1/3 w-24 h-24 border-2 border-error/50 rounded-lg">
+<div class="absolute -top-6 left-0 bg-error text-white text-[10px] px-1.5 py-0.5 font-bold rounded">INCONSISTENCY_DETECTOR</div>
+<div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-error"></div>
+<div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-error"></div>
+</div>
+<div class="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0)_49%,rgba(111,251,190,0.1)_50%,rgba(0,0,0,0)_51%)] bg-[length:100%_4px] opacity-20"></div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+<div class="flex items-center gap-6">
+<button class="text-white hover:text-tertiary-fixed transition-colors">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="flex-1 space-y-2">
+<div class="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-fixed w-3/4"></div>
+</div>
+<div class="flex justify-between text-[10px] font-bold tracking-widest text-white/60">
+<span>02:14 / 03:00</span>
+<span>75% ANALYZED</span>
+</div>
+</div>
+<div class="flex gap-4 text-white/80">
+<span class="material-symbols-outlined cursor-pointer hover:text-white">settings_cinematic_blur</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-white">fullscreen</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-8 flex items-center gap-12">
+<div class="flex-1">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-manrope font-bold text-slate-900 uppercase tracking-widest text-xs">Scanning Phase 3/4: Neural Layer Analysis</h3>
+<span class="text-xs font-bold text-primary-container">74% COMPLETE</span>
+</div>
+<div class="h-3 w-full bg-surface-container-high rounded-full overflow-hidden p-0.5">
+<div class="h-full bg-primary-container rounded-full" style="width: 74%"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-8 border-l border-surface-container-high pl-12">
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Pings</p>
+<p class="text-2xl font-extrabold text-slate-950">1,402</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Anomalies</p>
+<p class="text-2xl font-extrabold text-error">03</p>
+</div>
+</div>
+</div>
+</div>
+<div class="col-span-12 xl:col-span-4 space-y-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 h-[calc(100%-88px)] flex flex-col">
+<div class="flex items-center justify-between mb-6 pb-4 border-b border-surface-container-high">
+<h2 class="font-manrope font-extrabold text-slate-950 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">analytics</span>
+                                Detection Stream
+                            </h2>
+<span class="text-[10px] font-bold text-slate-400 uppercase">Live Buffer</span>
+</div>
+<div class="flex-1 overflow-y-auto space-y-4 pr-2">
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-error">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-error bg-error-container px-1.5 py-0.5 rounded">CRITICAL ANOMALY</span>
+<span class="text-[10px] font-mono text-slate-400">02:14:12</span>
+</div>
+<p class="text-sm font-semibold text-slate-900">Inconsistent Light Vector detected</p>
+<p class="text-xs text-slate-500 mt-1 leading-relaxed">Ray tracing analysis shows shadow-to-source mismatch on Subject_Alpha's nasal ridge.</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-tertiary-fixed">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-on-tertiary-container bg-tertiary-fixed px-1.5 py-0.5 rounded">METADATA EXTRACTED</span>
+<span class="text-[10px] font-mono text-slate-400">02:13:58</span>
+</div>
+<p class="text-sm font-semibold text-slate-900">GPS Header: [51.5074° N, 0.1278° W]</p>
+<p class="text-xs text-slate-500 mt-1 leading-relaxed">Origin confirmed as Greater London area. Timestamp aligns with file creation date.</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary-container">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-white bg-primary-container px-1.5 py-0.5 rounded">NEURAL SCAN</span>
+<span class="text-[10px] font-mono text-slate-400">02:13:45</span>
+</div>
+<p class="text-sm font-semibold text-slate-900">Frequency Analysis: Stable</p>
+<p class="text-xs text-slate-500 mt-1 leading-relaxed">No high-frequency compression artifacts found in background texture layers.</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-error">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-error bg-error-container px-1.5 py-0.5 rounded">WARNING</span>
+<span class="text-[10px] font-mono text-slate-400">02:12:10</span>
+</div>
+<p class="text-sm font-semibold text-slate-900">Non-Uniform Noise Distribution</p>
+<p class="text-xs text-slate-500 mt-1 leading-relaxed">Frame jitter detected in blue channel; possible GAN-based reconstruction.</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-tertiary-fixed">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-on-tertiary-container bg-tertiary-fixed px-1.5 py-0.5 rounded">VERIFICATION</span>
+<span class="text-[10px] font-mono text-slate-400">02:11:04</span>
+</div>
+<p class="text-sm font-semibold text-slate-900">Audio Sync: Validated</p>
+<p class="text-xs text-slate-500 mt-1 leading-relaxed">Micro-expression matching suggests 99.2% probability of genuine vocalization.</p>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-surface-container-high">
+<button class="w-full py-3 bg-surface-container-highest text-on-surface font-manrope font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span>
+                                Export Forensic Report
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-surface-container-lowest p-6 rounded-xl space-y-4">
+<h4 class="font-manrope font-bold text-slate-950 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">camera</span>
+                        Camera Fingerprint
+                    </h4>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">Sensor Type</span>
+<span class="font-semibold text-slate-900">CMOS Full Frame</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">PRNU Match</span>
+<span class="font-semibold text-tertiary-fixed-dim">94% Confidence</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">ISO Variance</span>
+<span class="font-semibold text-slate-900">Nominal</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl space-y-4">
+<h4 class="font-manrope font-bold text-slate-950 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">view_in_ar</span>
+                        Geometry Audit
+                    </h4>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">Perspective Alignment</span>
+<span class="font-semibold text-slate-900">Pass</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">Reflection Consistency</span>
+<span class="font-semibold text-error">Warning</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">Vanishing Point</span>
+<span class="font-semibold text-slate-900">Coherent</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl space-y-4">
+<h4 class="font-manrope font-bold text-slate-950 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">memory</span>
+                        AI Signal Detection
+                    </h4>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">Diffusion Residuals</span>
+<span class="font-semibold text-slate-900">0.02% detected</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">Up-sampling Artifacts</span>
+<span class="font-semibold text-slate-900">None</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-500">Neural Synthesis Score</span>
+<span class="font-semibold text-tertiary-fixed-dim">Very Low</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-50/90 backdrop-blur-lg flex justify-around items-center h-16 z-50 px-4">
+<button class="flex flex-col items-center gap-1 text-slate-950">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-bold">DASHBOARD</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-bold">ANALYSIS</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">database</span>
+<span class="text-[10px] font-bold">ARCHIVE</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold">SETTINGS</span>
+</button>
+</footer>
+</body></html>

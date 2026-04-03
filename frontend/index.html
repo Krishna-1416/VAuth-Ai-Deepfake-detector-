@@ -4,10 +4,83 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>V-AUTH | AI Authentication</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>V Auth</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#6ffbbe",
+                      "error": "#ba1a1a",
+                      "tertiary": "#000000",
+                      "primary-container": "#001453",
+                      "surface-container-high": "#e6e8ea",
+                      "error-container": "#ffdad6",
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#2d3133",
+                      "surface-dim": "#d8dadc",
+                      "secondary": "#515f74",
+                      "primary": "#000000",
+                      "on-primary-fixed": "#001453",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-secondary-container": "#57657a",
+                      "secondary-fixed": "#d5e3fc",
+                      "on-surface": "#191c1e",
+                      "surface-container-low": "#f2f4f6",
+                      "on-primary-container": "#607cec",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-background": "#191c1e",
+                      "surface-container-highest": "#e0e3e5",
+                      "surface-tint": "#3755c3",
+                      "surface-bright": "#f7f9fb",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed-variant": "#173bab",
+                      "background": "#f7f9fb",
+                      "outline": "#76777d",
+                      "tertiary-container": "#002113",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "primary-fixed": "#dde1ff",
+                      "outline-variant": "#c6c6cd",
+                      "surface-container": "#eceef0",
+                      "on-tertiary": "#ffffff",
+                      "surface-variant": "#e0e3e5",
+                      "on-surface-variant": "#45464d",
+                      "secondary-container": "#d5e3fc",
+                      "on-tertiary-container": "#009668",
+                      "on-secondary-fixed-variant": "#3a485b",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "primary-fixed-dim": "#b8c4ff",
+                      "inverse-primary": "#b8c4ff",
+                      "secondary-fixed-dim": "#b9c7df",
+                      "on-tertiary-fixed": "#002113",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#f7f9fb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
   </head>
-  <body>
+  <body class="bg-surface text-on-surface min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings - Forensic Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#6ffbbe",
+                        "error": "#ba1a1a",
+                        "tertiary": "#000000",
+                        "primary-container": "#001453",
+                        "surface-container-high": "#e6e8ea",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2d3133",
+                        "surface-dim": "#d8dadc",
+                        "secondary": "#515f74",
+                        "primary": "#000000",
+                        "on-primary-fixed": "#001453",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-secondary-container": "#57657a",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-surface": "#191c1e",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-container": "#607cec",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-background": "#191c1e",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-tint": "#3755c3",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#173bab",
+                        "background": "#f7f9fb",
+                        "outline": "#76777d",
+                        "tertiary-container": "#002113",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "primary-fixed": "#dde1ff",
+                        "outline-variant": "#c6c6cd",
+                        "surface-container": "#eceef0",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "on-surface-variant": "#45464d",
+                        "secondary-container": "#d5e3fc",
+                        "on-tertiary-container": "#009668",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "inverse-primary": "#b8c4ff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "on-tertiary-fixed": "#002113",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f7f9fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<nav class="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl flex justify-between items-center px-8 h-16 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-slate-950">Forensic Intelligence</span>
+<div class="hidden md:flex items-center space-gap-6 gap-6">
+<a class="text-slate-500 font-manrope tracking-tight font-semibold hover:text-slate-900 transition-colors duration-200" href="#">Analysis</a>
+<a class="text-slate-500 font-manrope tracking-tight font-semibold hover:text-slate-900 transition-colors duration-200" href="#">Archive</a>
+<a class="text-slate-500 font-manrope tracking-tight font-semibold hover:text-slate-900 transition-colors duration-200" href="#">Intelligence</a>
+<a class="text-slate-950 border-b-2 border-slate-950 pb-1 font-manrope tracking-tight font-semibold" href="#">Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-100/50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-100/50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="shield_person">shield_person</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden ml-2 bg-surface-container-high">
+<img alt="User forensic profile" class="w-full h-full object-cover" data-alt="Professional headshot of a male forensic analyst in a clinical studio setting with soft neutral lighting and clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6ScS4drVe3owxrzjjpcMqCeC2IwGw4Idq0Aqw9W1lN_zKStvXKii7uO9qJea1dpPiERkV8mneQLf2Bzl_rRAmamWsKRb-M42tkhyE3F6JGCBe0JScQjY0jYZxEuoLzx0roO3uAnxbjFUYW3AEJhTIyqLRVNeVx3QTkEDWVCNrB-NXzc_W8XpyJbjE6rrEfYiJAa0N5WQ1zfrnVl1723f0cm67eDUCQvwPTTgPKTHGprL-3nl4Kf8SEK-AhiXaTnjoYPO7UCbStjqc"/>
+</div>
+</div>
+</nav>
+<div class="bg-slate-200/20 h-px w-full mt-16"></div>
+<main class="max-w-7xl mx-auto px-8 py-12 flex flex-col md:flex-row gap-12">
+<aside class="w-full md:w-64 flex-shrink-0">
+<div class="mb-10">
+<h1 class="text-3xl font-extrabold tracking-tight mb-2">Settings</h1>
+<p class="text-sm text-secondary font-medium">Manage your terminal configuration and security protocols.</p>
+</div>
+<nav class="flex flex-col space-y-1">
+<button class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-surface-container-low text-primary transition-all duration-300">
+<span class="material-symbols-outlined text-[20px]" data-icon="person">person</span>
+                    Profile
+                </button>
+<button class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-secondary hover:bg-surface-container-low transition-all duration-300">
+<span class="material-symbols-outlined text-[20px]" data-icon="security">security</span>
+                    Security
+                </button>
+<button class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-secondary hover:bg-surface-container-low transition-all duration-300">
+<span class="material-symbols-outlined text-[20px]" data-icon="vpn_key">vpn_key</span>
+                    API Keys
+                </button>
+<button class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-secondary hover:bg-surface-container-low transition-all duration-300">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+                    Notifications
+                </button>
+</nav>
+<div class="mt-12 p-6 rounded-xl bg-surface-container-low border-none relative overflow-hidden">
+<div class="relative z-10">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2 block">System Status</span>
+<div class="flex items-center gap-2 mb-1">
+<div class="h-2 w-2 rounded-full bg-tertiary-fixed-dim"></div>
+<span class="text-xs font-semibold">Terminal 01 Active</span>
+</div>
+<p class="text-[11px] text-secondary">Verification engine running at 98.4% accuracy.</p>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-6xl" data-icon="biometric_viewer">smart_card_reader</span>
+</div>
+</div>
+</aside>
+<section class="flex-grow space-y-12">
+<div class="bg-surface-container-lowest p-10 rounded-none md:rounded-none relative">
+<div class="max-w-2xl">
+<h2 class="text-xl font-bold mb-8 flex items-center gap-2">
+                        Profile Information
+                    </h2>
+<div class="space-y-8">
+<div class="flex flex-col gap-2">
+<label class="text-[12px] font-bold text-secondary uppercase tracking-wider">Analyst Name</label>
+<input class="bg-surface-container-low border-b border-outline-variant/20 border-x-0 border-t-0 focus:ring-0 focus:border-primary-container p-3 text-on-surface font-medium transition-all" type="text" value="Dr. Julian Vane"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[12px] font-bold text-secondary uppercase tracking-wider">Organization Email</label>
+<input class="bg-surface-container-low border-b border-outline-variant/20 border-x-0 border-t-0 focus:ring-0 focus:border-primary-container p-3 text-on-surface font-medium transition-all" type="email" value="j.vane@forensic-intel.ia"/>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div class="flex flex-col gap-2">
+<label class="text-[12px] font-bold text-secondary uppercase tracking-wider">Role</label>
+<div class="p-3 bg-surface-container-high rounded text-sm font-semibold">Senior Verification Lead</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[12px] font-bold text-secondary uppercase tracking-wider">Access Tier</label>
+<div class="p-3 bg-surface-container-high rounded text-sm font-semibold">Level 4 - Forensic Archive</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="bg-surface-container-lowest p-10">
+<h2 class="text-xl font-bold mb-6">Security Protocols</h2>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-bold text-sm">Biometric 2FA</p>
+<p class="text-xs text-secondary mt-1">Requires fingerprint or face scan for archive access.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-bold text-sm">Session Hardening</p>
+<p class="text-xs text-secondary mt-1">Auto-terminate session after 15m of inactivity.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<button class="mt-4 text-sm font-bold text-primary-container flex items-center gap-2 hover:underline">
+                            Update Security Credentials
+                            <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-10">
+<h2 class="text-xl font-bold mb-6">Intelligence Feeds</h2>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-bold text-sm">Live Stream Alerts</p>
+<p class="text-xs text-secondary mt-1">Desktop push for synthetic content detection.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-bold text-sm">Report Digest</p>
+<p class="text-xs text-secondary mt-1">Weekly analysis of regional deepfake trends.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-10">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h2 class="text-xl font-bold">Active API Keys</h2>
+<p class="text-sm text-secondary">Authorized keys for external forensic tools.</p>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded text-sm font-bold tracking-tight hover:opacity-90 transition-opacity">
+                        Generate New Key
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-surface-container-high">
+<th class="pb-4 text-[12px] font-bold text-secondary uppercase tracking-wider">Label</th>
+<th class="pb-4 text-[12px] font-bold text-secondary uppercase tracking-wider">Key Hash</th>
+<th class="pb-4 text-[12px] font-bold text-secondary uppercase tracking-wider">Last Active</th>
+<th class="pb-4 text-right text-[12px] font-bold text-secondary uppercase tracking-wider">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-surface-container-low hover:bg-surface-container-low transition-colors group">
+<td class="py-5 font-bold text-sm">DeepScan_Primary_v2</td>
+<td class="py-5 font-mono text-xs text-secondary">fk_live_8829...482a</td>
+<td class="py-5 text-sm text-on-surface-variant">2 hours ago</td>
+<td class="py-5 text-right">
+<span class="bg-tertiary-container text-on-tertiary-container text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">Active</span>
+</td>
+</tr>
+<tr class="border-b border-surface-container-low hover:bg-surface-container-low transition-colors group">
+<td class="py-5 font-bold text-sm">Audit_Log_Exporter</td>
+<td class="py-5 font-mono text-xs text-secondary">fk_live_1092...77bb</td>
+<td class="py-5 text-sm text-on-surface-variant">14 Oct 2023</td>
+<td class="py-5 text-right">
+<span class="bg-tertiary-container text-on-tertiary-container text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">Active</span>
+</td>
+</tr>
+<tr class="group">
+<td class="py-5 font-bold text-sm">Mobile_Validator_App</td>
+<td class="py-5 font-mono text-xs text-secondary">fk_live_2291...391c</td>
+<td class="py-5 text-sm text-on-surface-variant">Never</td>
+<td class="py-5 text-right">
+<span class="bg-surface-container-highest text-secondary text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">Revoked</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="flex justify-end gap-4 pt-8">
+<button class="px-8 py-3 text-sm font-bold text-secondary hover:bg-surface-container-low rounded-lg transition-colors">Discard Changes</button>
+<button class="px-8 py-3 text-sm font-bold bg-primary-container text-on-primary-container rounded shadow-lg shadow-primary-container/10 hover:opacity-90 transition-all">Save Terminal Configuration</button>
+</div>
+</section>
+</main>
+<footer class="mt-20 border-t border-surface-container-high py-12 px-8">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="text-sm font-bold tracking-tighter">Forensic Intelligence</span>
+<span class="text-xs text-secondary">© 2024. Authority Verification protocols engaged.</span>
+</div>
+<div class="flex gap-8">
+<a class="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary transition-colors" href="#">Legal Policy</a>
+<a class="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary transition-colors" href="#">Terminal Support</a>
+<a class="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary transition-colors" href="#">Global Registry</a>
+</div>
+</div>
+</footer>
+</body></html>
