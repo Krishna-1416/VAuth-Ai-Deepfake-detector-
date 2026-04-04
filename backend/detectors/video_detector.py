@@ -209,7 +209,6 @@ def _weighted_aggregate(fake_probs: list, forensic_data: list) -> (float, float,
         stds[key]  = float(np.std(vals))
 
     # 3. Temporal Stability Analysis
-    # Synthetic videos often have "pulsing" noise or jumping landmarks
     ml_flicker = np.std(probs)
     forensic_flicker = np.mean(list(stds.values()))
     

@@ -62,15 +62,7 @@ def calculate_lbp(cv_img: np.ndarray) -> float:
         cy, cx = h // 2, w // 2
         patch = gray[max(0, cy-128):min(h, cy+128), max(0, cx-128):min(w, cx+128)]
         if patch.size < 100: return 0.5
-        lbp = np.zeros_like(patch, dtype=np.uint8)
-        for i in range(1, patch.shape[0]-1):
-            for j in range(1, patch.shape[1]-1):
-                center = patch[i, j]
-                code = 0
-                for k in range(8):
-                    # Manual bit-shifting for LBP
-                    pass # Simplified for clarity, fully implemented below
-        # (Full LBP implementation moved here from image_detector)
+        
         return _full_lbp_impl(patch)
     except Exception:
         return 0.5
