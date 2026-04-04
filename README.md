@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/SENTINEL-Deepfake%20Detection-00ff88?style=for-the-badge&logo=shield&logoColor=white" alt="Sentinel Badge"/>
 </p>
 
-<h1 align="center">🛡️ Sentinel — AI-Powered Deepfake Detection Platform</h1>
+<h1 align="center">🛡️ V-Auth — AI-Powered Deepfake Detection Platform</h1>
 
 <p align="center">
   <b>Decode what's real. Expose what's not.</b><br/>
