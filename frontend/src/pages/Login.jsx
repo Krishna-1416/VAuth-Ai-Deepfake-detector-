@@ -13,6 +13,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(location.state?.mode === 'register');
   const [statusMsg, setStatusMsg] = useState('');
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   // Redirect if already logged in
   useEffect(() => {
@@ -50,6 +52,25 @@ const Login = () => {
           navigate('/dashboard');
         }
       }
+    } catch (err) {
+      setError(err.message.toUpperCase());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setStatusMsg('');
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (resetError) throw resetError;
+      setStatusMsg('TOKEN RESET LINK DISPATCHED. CHECK YOUR SECURE INBOX.');
+      setResetEmail('');
     } catch (err) {
       setError(err.message.toUpperCase());
     } finally {
@@ -117,10 +138,14 @@ const Login = () => {
             </div>
 
             <h1 className="font-headline font-extrabold text-4xl tracking-tighter text-primary mb-3">
-              {isRegistering ? 'Clearance Request' : 'Access Terminal'}
+              {isForgotPassword ? 'Reset Token' : isRegistering ? 'Clearance Request' : 'Access Terminal'}
             </h1>
             <p className="text-slate-500 font-medium leading-relaxed">
-              {isRegistering ? 'Initialize credentials for neural forensics.' : 'Authenticate to access the investigation archive.'}
+              {isForgotPassword
+                ? 'Enter your agent identity to receive a secure reset link.'
+                : isRegistering
+                ? 'Initialize credentials for neural forensics.'
+                : 'Authenticate to access the investigation archive.'}
             </p>
             
             {/* Error Message */}
@@ -138,8 +163,9 @@ const Login = () => {
             )}
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-8">
-            <div className="space-y-6">
+          {isForgotPassword ? (
+            /* ── Forgot Password Form ── */
+            <form onSubmit={handleForgotPassword} className="space-y-8">
               <div className="group">
                 <label className="block text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 group-focus-within:text-primary transition-colors px-1">
                   Agent Identity
@@ -147,8 +173,8 @@ const Login = () => {
                 <div className="relative">
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
                     placeholder="name@v-auth.ai"
                     className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl px-6 py-4 text-primary font-medium placeholder:text-slate-300 outline-none transition-all focus:border-primary-container focus:bg-white shadow-sm"
                     required
@@ -156,56 +182,99 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="group relative">
-                <label className="block text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 group-focus-within:text-primary transition-colors px-1">
-                  Security Token
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl px-6 py-4 text-primary font-medium placeholder:text-slate-300 outline-none transition-all focus:border-primary-container focus:bg-white shadow-sm pr-14"
-                    required
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors p-2"
-                  >
-                    <span className="material-symbols-outlined text-xl">
-                      {showPassword ? 'visibility_off' : 'visibility'}
-                    </span>
-                  </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-5 bg-primary-container text-white font-bold rounded-2xl hover:bg-primary-container/90 transition-all active:scale-95 shadow-[0_20px_40px_-10px_rgba(0,20,83,0.25)] flex items-center justify-center gap-3 group disabled:opacity-50"
+              >
+                {loading ? 'DISPATCHING...' : 'Dispatch Reset Link'}
+                {!loading && <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">send</span>}
+                {loading && <span className="material-symbols-outlined animate-spin text-xl">sync</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setIsForgotPassword(false); setError(null); setStatusMsg(''); }}
+                className="w-full text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-primary transition-colors py-2"
+              >
+                ← Back to Access Terminal
+              </button>
+            </form>
+          ) : (
+            /* ── Sign In / Register Form ── */
+            <form onSubmit={handleAuth} className="space-y-8">
+              <div className="space-y-6">
+                <div className="group">
+                  <label className="block text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 group-focus-within:text-primary transition-colors px-1">
+                    Agent Identity
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@v-auth.ai"
+                      className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl px-6 py-4 text-primary font-medium placeholder:text-slate-300 outline-none transition-all focus:border-primary-container focus:bg-white shadow-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="group relative">
+                  <label className="block text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 group-focus-within:text-primary transition-colors px-1">
+                    Security Token
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl px-6 py-4 text-primary font-medium placeholder:text-slate-300 outline-none transition-all focus:border-primary-container focus:bg-white shadow-sm pr-14"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors p-2"
+                    >
+                      <span className="material-symbols-outlined text-xl">
+                        {showPassword ? 'visibility_off' : 'visibility'}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between py-2">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="w-5 h-5 border-2 border-slate-200 rounded-lg flex items-center justify-center group-hover:border-primary transition-colors overflow-hidden">
-                  <div className="w-2.5 h-2.5 bg-primary rounded-sm opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                </div>
-                <span className="text-xs font-bold tracking-tight text-slate-500 group-hover:text-primary transition-colors uppercase">Stay Authenticated</span>
-              </label>
-              {!isRegistering && (
-                <button type="button" className="text-xs font-bold tracking-tight text-primary hover:underline decoration-2 underline-offset-4 uppercase">
-                  Reset Token
-                </button>
-              )}
-            </div>
+              <div className="flex items-center justify-between py-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="w-5 h-5 border-2 border-slate-200 rounded-lg flex items-center justify-center group-hover:border-primary transition-colors overflow-hidden">
+                    <div className="w-2.5 h-2.5 bg-primary rounded-sm opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                  </div>
+                  <span className="text-xs font-bold tracking-tight text-slate-500 group-hover:text-primary transition-colors uppercase">Stay Authenticated</span>
+                </label>
+                {!isRegistering && (
+                  <button
+                    type="button"
+                    onClick={() => { setIsForgotPassword(true); setError(null); setStatusMsg(''); }}
+                    className="text-xs font-bold tracking-tight text-primary hover:underline decoration-2 underline-offset-4 uppercase"
+                  >
+                    Reset Token
+                  </button>
+                )}
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-5 bg-primary-container text-white font-bold rounded-2xl hover:bg-primary-container/90 transition-all active:scale-95 shadow-[0_20px_40px_-10px_rgba(0,20,83,0.25)] flex items-center justify-center gap-3 group disabled:opacity-50"
-            >
-              {loading ? (isRegistering ? 'INITIALIZING...' : 'AUTHENTICATING...') : (isRegistering ? 'Request Clearance' : 'Authorized Access')}
-              {!loading && <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">{isRegistering ? 'person_add' : 'login'}</span>}
-              {loading && <span className="material-symbols-outlined animate-spin text-xl">sync</span>}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-5 bg-primary-container text-white font-bold rounded-2xl hover:bg-primary-container/90 transition-all active:scale-95 shadow-[0_20px_40px_-10px_rgba(0,20,83,0.25)] flex items-center justify-center gap-3 group disabled:opacity-50"
+              >
+                {loading ? (isRegistering ? 'INITIALIZING...' : 'AUTHENTICATING...') : (isRegistering ? 'Request Clearance' : 'Authorized Access')}
+                {!loading && <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">{isRegistering ? 'person_add' : 'login'}</span>}
+                {loading && <span className="material-symbols-outlined animate-spin text-xl">sync</span>}
+              </button>
+            </form>
+          )}
 
           <p className="mt-12 text-[10px] font-black tracking-[0.2em] text-slate-300 uppercase text-center">
             V-Auth Protocol Beta v0.4 

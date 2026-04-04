@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import Engine from './pages/Engine';
 import Settings from './pages/Settings';
 import LiveStream from './pages/LiveStream';
@@ -39,6 +40,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={session ? <Navigate to="/dashboard" /> : <Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* Protected Routes */}
         <Route element={session ? <DashboardLayout /> : <Navigate to="/login" />}>
