@@ -1,5 +1,5 @@
 """
-Sentinel Core — FastAPI Deepfake Detection Backend
+V-Auth — FastAPI Deepfake Detection Backend
 POST /detect  → analyse image or video file
 GET  /health  → liveness probe
 
@@ -11,13 +11,15 @@ import os
 import time
 import tempfile
 import asyncio
+import base64
 import uvicorn
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, WebSocket, WebSocketDisconnect, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from supabase import create_client, Client
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
 from detectors.image_detector import analyse_image, _get_hf_image_pipe
 from detectors.video_detector import analyse_video, load_video_model
 
@@ -37,20 +39,44 @@ async def lifespan(app: FastAPI):
 # ── App ───────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Sentinel Core — Deepfake Detection API",
+    title="V-Auth — Deepfake Detection API",
     version="1.0.0",
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_methods=["GET", "POST"],
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "https://frontend-rho-puce-idsoazw5wz.vercel.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# — Supabase Auth config
+SUPABASE_URL = "https://dfkbrzuzvgkpboeyjwzr.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRma2JyenV6dmdrcGJvZXlqd3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTcwMTQsImV4cCI6MjA5MDgzMzAxNH0.2085D2_YQYSqFSLHnsIEppDgwcvZmBt0_Nysmkqw34E"
+supabaseClient: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+security = HTTPBearer()
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Extract and verify token with Supabase API."""
+    token = credentials.credentials
+    try:
+        # Simple verification by fetching current user data
+        # Note: We use the client initialized with the static key to verify the user's token
+        user = supabaseClient.auth.get_user(token)
+        if not user:
+            raise HTTPException(401, "Invalid authentication token")
+        return user
+    except Exception as e:
+        raise HTTPException(401, f"Authentication failed: {str(e)}")
+
+# — Constants ─────────────────────────────────────────────────────────────────
 MAX_FILE_SIZE_MB = 200
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg", "image/png", "image/webp", "image/bmp", 
@@ -68,7 +94,7 @@ async def health():
 
 
 @app.post("/detect")
-async def detect(file: UploadFile = File(...)):
+async def detect(file: UploadFile = File(...), credentials: HTTPAuthorizationCredentials = Depends(security), user=Depends(get_current_user)):
     t_start = time.time()
 
     # — Validate size
@@ -100,27 +126,100 @@ async def detect(file: UploadFile = File(...)):
         raise HTTPException(415, f"Unsupported media type: {mime}. Send image/* or video/*.")
 
     result["processing_time_ms"] = round((time.time() - t_start) * 1000)
+
+    # — Persist forensic report to Database
+    try:
+        # Create a request-specific client with the user's token
+        # This ensures RLS allows the insert for this user_id
+        auth_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        auth_client.postgrest.auth(credentials.credentials) 
+
+        auth_client.table("scans").insert({
+            "user_id": user.user.id,
+            "file_name": file.filename,
+            "media_type": result["media_type"],
+            "prediction": result["prediction"],
+            "confidence": result["confidence"],
+            "explanation": result.get("explanation", ""),
+            "breakdown": result.get("breakdown", {})
+        }).execute()
+        print(f"[Sentinel] Forensic report persisted for {user.user.email} ✓")
+    except Exception as e:
+        print(f"[Sentinel] Database persistence failed: {str(e)}")
+
     return JSONResponse(result)
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+@app.websocket("/live")
+async def websocket_endpoint(websocket: WebSocket):
+    """Real-time forensic analysis stream with authentication."""
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001, reason="Missing authentication token")
+        return
 
-def _ext_from_mime(mime: str) -> str:
-    return {
-        "video/mp4": ".mp4",
-        "video/quicktime": ".mov",
-        "video/x-msvideo": ".avi",
-        "video/webm": ".webm",
-        "video/x-matroska": ".mkv",
-    }.get(mime, ".mp4")
+    try:
+        user = supabaseClient.auth.get_user(token)
+        if not user:
+            await websocket.close(code=4001, reason="Invalid authentication token")
+            return
+    except Exception as e:
+        await websocket.close(code=4001, reason=f"Authentication failed: {str(e)}")
+        return
 
-
-# ── Entry point ───────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
+    await websocket.accept()
+    print(f"[Sentinel] Live monitor link validated for {user.user.email} ✓")
+    
+    try:
+        while True:
+            # Receive frame as base64 string
+            data = await websocket.receive_text()
+            if not data: continue
+            
+            t_frame = time.time()
+            
+            try:
+                # Strip base64 header if present
+                if "," in data:
+                    data = data.split(",")[1]
+                
+                # Decode and analyse
+                img_bytes = base64.b64decode(data)
+                result = await asyncio.to_thread(analyse_image, img_bytes, "image/jpeg")
+                
+                # Add metadata
+                result["latency_ms"] = round((time.time() - t_frame) * 1000)
+                result["timestamp"]  = time.time()
+                
+                # Stream back
+                await websocket.send_json(result)
+                
+            except Exception as e:
+                print(f"[Sentinel] Frame error: {str(e)}")
+                await websocket.send_json({"error": "processing_failed", "msg": str(e)})
+200: 
+201:     except WebSocketDisconnect:
+202:         print("[Sentinel] Live monitor disconnected.")
+203: 
+204: 
+205: # ── Helpers ───────────────────────────────────────────────────────────────────
+206: 
+207: def _ext_from_mime(mime: str) -> str:
+208:     return {
+209:         "video/mp4": ".mp4",
+210:         "video/quicktime": ".mov",
+211:         "video/x-msvideo": ".avi",
+212:         "video/webm": ".webm",
+213:         "video/x-matroska": ".mkv",
+214:     }.get(mime, ".mp4")
+215: 
+216: 
+217: # ── Entry point ───────────────────────────────────────────────────────────────
+218: 
+219: if __name__ == "__main__":
+220:     uvicorn.run(
+221:         "main:app",
+222:         host="0.0.0.0",
+223:         port=8000,
+224:         reload=True,
+225:     )

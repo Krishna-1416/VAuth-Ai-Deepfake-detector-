@@ -11,6 +11,10 @@ import numpy as np
 import cv2
 from PIL import Image
 from utils.result_builder import build_result
+from utils.forensics import (
+    calculate_ela, calculate_lbp, calculate_srm, calculate_fft,
+    calculate_face_alignment, get_face_mesh, calculate_wavelet
+)
 
 # ── Global model handle (loaded once on startup) ──────────────────────────────
 _video_pipe = None
@@ -81,15 +85,48 @@ def analyse_video(video_path: str) -> dict:
         fake_probs.append(fake_prob)
         print(f"  frame fake_prob={fake_prob:.3f}  labels={labels}")
 
+    # — Per-frame deep forensics
+    forensic_data = []
+    face_mesh = get_face_mesh()
+    
+    for frame in frames:
+        cv_frame = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)
+        
+        # Signal aggregation
+        ela = calculate_ela(cv_frame)
+        lbp = calculate_lbp(cv_frame)
+        srm = calculate_srm(cv_frame)
+        wav = calculate_wavelet(cv_frame)
+        f_score, p_score = calculate_fft(cv_frame)
+        
+        # — Face alignment (Conditional on MediaPipe availability)
+        alignment = 0.5
+        if face_mesh is not None:
+            try:
+                results = face_mesh.process(np.array(frame))
+                if results and results.multi_face_landmarks:
+                    alignment = calculate_face_alignment(results.multi_face_landmarks[0].landmark)
+            except Exception as e:
+                print(f"[VideoDetector] Face alignment failed on frame: {e}")
+            
+        forensic_data.append({
+            "ela": ela, "lbp": lbp, "srm": srm, "wavelet": wav,
+            "fft": f_score, "alignment": alignment
+        })
+
     # — Weighted aggregation + Temporal Analysis
-    composite, flicker = _weighted_aggregate(fake_probs)
+    composite, flicker, forensic_means = _weighted_aggregate(fake_probs, forensic_data)
 
     breakdown = {
-        "diffusion_score":    round(composite, 3),
-        "manipulation_score": round(max(composite * 0.9, flicker), 3),
+        "diffusion_score":    round(max(composite, forensic_means["srm"]), 3),
+        "manipulation_score": round(max(composite * 0.9, flicker, forensic_means["alignment"]), 3),
         "realism_score":      round(1.0 - composite, 3),
-        "fourier_spectral":   round(composite * 0.85, 3),
+        "fourier_spectral":   round(forensic_means["fft"], 3),
         "temporal_flicker":   round(flicker, 3),
+        "ela_score":          round(forensic_means["ela"], 3),
+        "texture_score":      round(forensic_means["lbp"], 3),
+        "wavelet_sig":        round(forensic_means["wavelet"], 3),
+        "geometric_alignment": round(forensic_means["alignment"], 3),
     }
 
     result = build_result(composite, breakdown, media="video")
@@ -147,34 +184,44 @@ def _extract_fake_prob(labels: dict) -> float:
     return float(max(labels.values())) if labels else 0.5
 
 
-def _weighted_aggregate(fake_probs: list) -> (float, float):
+def _weighted_aggregate(fake_probs: list, forensic_data: list) -> (float, float, dict):
     """
-    Aggregation with Temporal Flicker Detection.
+    Aggregation with Multi-Modal Temporal Analysis.
     - Standard Weighted average (high scores weighted more).
     - Variance analysis: high flicker = deepfake indicator.
-    Returns (composite_score, flicker_score)
+    - Forensic stability analysis: unstable noise/textures = synthetic.
     """
     if not fake_probs:
-        return 0.5, 0.0
+        return 0.5, 0.0, {k: 0.5 for k in ["ela", "lbp", "srm", "fft", "alignment", "wavelet"]}
     
     probs = np.array(fake_probs, dtype=float)
     
-    # 1. Base Weighted Average (Strong local detections weighted more)
+    # 1. Base Weighted Average (ML Model)
     weights = np.where(probs >= 0.70, OUTLIER_WEIGHT, 1.0)
     base_score = np.average(probs, weights=weights)
     
-    # 2. Temporal Flicker Detection (Variance across time)
-    # Real videos have stable forensic signatures; Deepfakes 'flicker'.
-    std_dev = np.std(probs)
-    flicker_score = np.clip(std_dev * 4.0, 0.0, 0.95) # Scale to [0, 0.95]
+    # 2. Forensic Signal Aggregation
+    means = {}
+    stds  = {}
+    for key in ["ela", "lbp", "srm", "fft", "alignment", "wavelet"]:
+        vals = np.array([f[key] for f in forensic_data])
+        means[key] = float(np.mean(vals))
+        stds[key]  = float(np.std(vals))
+
+    # 3. Temporal Stability Analysis
+    ml_flicker = np.std(probs)
+    forensic_flicker = np.mean(list(stds.values()))
     
-    # Penalise unstable detections (only if scores are actually mid-to-high)
+    # Combined flicker score (Real = stable, Fake = jittery)
+    flicker_score = np.clip((ml_flicker * 3.0) + (forensic_flicker * 5.0), 0.0, 0.95)
+    
+    # Penalty for inconsistency
     penalty = 0.0
     if flicker_score > 0.4 and base_score > 0.3:
-        penalty = flicker_score * 0.15 # Add up to 15% to final score
+        penalty = flicker_score * 0.20
         
     final_score = np.clip(base_score + penalty, 0.0, 1.0)
-    return float(final_score), float(flicker_score)
+    return float(final_score), float(flicker_score), means
 
 
 def _fallback_result(reason: str) -> dict:
