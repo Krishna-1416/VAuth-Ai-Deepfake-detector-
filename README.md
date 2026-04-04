@@ -16,6 +16,9 @@
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white"/>
   <img src="https://img.shields.io/badge/PyTorch-2.2+-EE4C2C?style=flat-square&logo=pytorch&logoColor=white"/>
   <img src="https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=flat-square&logo=huggingface&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white"/>
 </p>
 
 ---
@@ -72,7 +75,7 @@ The engine automatically detects image quality tiers and rebalances signal weigh
 - **Dashboard Overview** — Scan history and aggregate statistics
 - **Live Stream Monitor** — Real-time forensic feed with manual start/stop controls
 - **Settings Panel** — User preferences and configuration
-- **Authentication** — Login/signup with persistent user sessions
+- **Authentication** — Supabase-powered authentication with persistent user sessions, forgot password & reset functionality
 
 ---
 
@@ -86,8 +89,10 @@ Ignition-Hackverse-DecodeX-/
 │   ├── detectors/
 │   │   ├── image_detector.py       # 5-signal ensemble fusion engine
 │   │   └── video_detector.py       # SigLIP2 batch frame analysis
-│   └── utils/
-│       └── result_builder.py       # Verdict, confidence & explanation builder
+│   ├── utils/
+│   │   ├── result_builder.py       # Verdict, confidence & explanation builder
+│   │   └── forensics.py            # Deepfake analysis helper tools
+│   └── render.yaml                 # Render deployment configuration
 │
 ├── frontend/                       # React 19 + Vite 8
 │   ├── index.html
@@ -106,7 +111,10 @@ Ignition-Hackverse-DecodeX-/
 │           ├── Engine.jsx          # Core detection interface
 │           ├── LiveStream.jsx      # Real-time forensic monitor
 │           ├── Settings.jsx        # User preferences
+│           ├── ResetPassword.jsx   # Auth recovery flow
 │           └── About.jsx           # Project information
+│   ├── vercel.json                 # Vercel deployment routing config
+│   └── setup_vercel.py             # Automates Vercel deployment variables
 │
 └── README.md
 ```
@@ -149,6 +157,11 @@ npm run dev
 ```
 
 Opens at **`http://localhost:5173`**.
+
+### ☁️ Deployment Guides
+
+- **Backend (Render):** A `render.yaml` configuration is included to seamlessly deploy the FastAPI service on Render as a Web Service.
+- **Frontend (Vercel):** The included `vercel.json` and React router setup directly map to Vercel's SPA routing. Run `python setup_vercel.py` or import the project directory to automatically deploy.
 
 ---
 
@@ -239,6 +252,8 @@ Input Media
 | **Computer Vision** | OpenCV, MediaPipe | Frame extraction, face mesh |
 | **Signal Processing** | NumPy, SciPy, PyWavelets | FFT, DWT, spectral analysis |
 | **Metadata** | Piexif, Pillow | EXIF parsing, image I/O |
+| **Authentication & Auth** | Supabase API | Secured persistent user accounts, session handling |
+| **Deployment Environments** | Vercel, Render | Frontend CDN distribution and Serverless Backend hosting |
 
 ---
 
