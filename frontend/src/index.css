@@ -62,6 +62,7 @@ body {
     font-family: 'Inter', sans-serif; 
     background-color: var(--surface);
     color: var(--on-surface);
+    scrollbar-gutter: stable;
 }
 
 h1, h2, h3, .font-headline { 
@@ -89,4 +90,32 @@ h1, h2, h3, .font-headline {
 /* Transition Utility */
 .transition-standard {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Forensic Animations */
+@keyframes scan-line {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+.animate-scan-line {
+  animation: scan-line 3s linear infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes scan-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.animate-scan-pulse {
+  animation: scan-pulse 2s ease-in-out infinite;
 }

@@ -41,15 +41,28 @@ _SIGNAL_TIPS = {
         "high": "Wavelet decomposition detects structured noise signatures specific to AI generators.",
         "low":  "Sub-band energy distribution matches organic photography.",
     },
+    "ela_score": {
+        "high": "ELA reveals inconsistent compression levels, suggesting generative patching or local edits.",
+        "low":  "Uniform compression error levels typical of single-source capture.",
+    },
+    "texture_score": {
+        "high": "Unnatural micro-texture regularity (LBP) detected, often found in synthetic skin/surfaces.",
+        "low":  "Organic micro-texture complexity consistent with real-world photography.",
+    },
+    "noise_score": {
+        "high": "SRM-based noise residuals show geometric fingerprints characteristic of AI generators.",
+        "low":  "Noise residuals exhibit random sensor behavior expected from real cameras.",
+    },
     "iris_consistency": {
         "high": "Specular highlights and iris positioning show unnatural bilateral divergence.",
         "low":  "Eye reflections are physically consistent with real-world optics.",
     },
     "temporal_flicker": {
         "high": "High temporal variance detected: forensic indices 'flicker' between frames.",
-        "low":  "Forensic signatures remain stable across the video timeline.",
+        "low":  "Forensic signatures remain stable across the timeline.",
     },
 }
+
 
 
 def build_result(

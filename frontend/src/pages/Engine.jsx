@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const Engine = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -151,11 +152,18 @@ const Engine = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:8000/detect', {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/detect`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
 
+      if (response.status === 401) throw new Error('Unauthorized');
       if (!response.ok) throw new Error('Backend connection failed');
 
       const data = await response.json();
@@ -166,7 +174,7 @@ const Engine = () => {
       setAnalysisResult({
         prediction: 'Error',
         confidence: 0,
-        explanation: 'Failed to connect to Sentinel Core backend.'
+        explanation: 'Failed to connect to V-Auth backend.'
       });
     } finally {
       setIsAnalyzing(false);
@@ -182,7 +190,7 @@ const Engine = () => {
             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200/50">
               <span className="material-symbols-outlined text-3xl text-slate-600" style={{ fontVariationSettings: "'FILL' 1" }}>policy</span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 mb-2">Sentinel Deepfake Forensic Scan</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 mb-2">V-AUTH Deepfake Forensic Scan</h1>
             <p className="text-slate-500 font-medium">Upload media for AI spectral & spatial analysis.</p>
           </div>
           
@@ -202,7 +210,7 @@ const Engine = () => {
               ref={fileInputRef} 
               className="hidden" 
               onChange={handleFileChange}
-              accept="image/*,video/*,audio/*"
+              accept="image/*,video/*"
             />
             
              {isDownloading && (
@@ -234,15 +242,12 @@ const Engine = () => {
               <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
                 <span className="material-symbols-outlined text-[14px]">image</span> Image
               </span>
-              <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
-                <span className="material-symbols-outlined text-[14px]">graphic_eq</span> Audio
-              </span>
             </div>
           </div>
           
           <div className="mt-8 flex items-center justify-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">
             <span className="material-symbols-outlined text-sm">lock</span>
-            Sentinel Core v1.0 • Secure Local Detection active
+            V-Auth v1.0 • Secure Local Detection active
           </div>
         </div>
       </div>
@@ -251,7 +256,7 @@ const Engine = () => {
 
   // RENDER: ACTIVE ANALYSIS STATE
   return (
-    <div className="p-8 animate-in fade-in duration-500">
+    <div className="p-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-4 mb-4">
         <button onClick={handleReset} className="w-8 h-8 flex items-center justify-center border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-full transition-colors text-slate-500 hover:text-slate-900 active:scale-95">
           <span className="material-symbols-outlined text-[18px]">close</span>
@@ -259,7 +264,7 @@ const Engine = () => {
         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cancel & Reset Scan</span>
       </div>
 
-      <div className="flex justify-between items-end mb-8">
+      <div className="flex justify-between items-end mb-4">
         <div>
           <nav className="flex gap-2 text-xs font-medium text-slate-400 mb-2">
             <span>Forensics</span>
@@ -298,7 +303,7 @@ const Engine = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 xl:col-span-8 space-y-6">
           <div className="relative bg-black rounded-xl overflow-hidden aspect-video shadow-2xl group flex items-center justify-center ring-1 ring-white/10">
             {previewUrl && (
@@ -325,7 +330,7 @@ const Engine = () => {
             </div>
           </div>
           
-          <div className="bg-surface-container-lowest rounded-xl p-8 flex items-center gap-12 border border-surface-container-high shadow-sm">
+          <div className="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-6 border border-surface-container-high shadow-sm">
             <div className="flex-1">
               <div className="flex justify-between items-center mb-4">
                 <h3 className={`font-manrope font-bold uppercase tracking-widest text-xs ${
@@ -357,7 +362,7 @@ const Engine = () => {
                 ></div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-8 border-l border-surface-container-high pl-12">
+            <div className="grid grid-cols-2 gap-4 border-l border-surface-container-high pl-6">
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">State</p>
                 <p className="text-2xl font-extrabold text-slate-950">
@@ -389,7 +394,7 @@ const Engine = () => {
         </div>
         
         <div className="col-span-12 xl:col-span-4 space-y-6">
-          <div className="bg-surface-container-lowest rounded-xl p-6 h-[calc(100%-88px)] flex flex-col border border-surface-container-high shadow-sm">
+          <div className="bg-surface-container-lowest rounded-xl p-4 h-[calc(100%-88px)] flex flex-col border border-surface-container-high shadow-sm">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-surface-container-high">
               <h2 className="font-manrope font-extrabold text-slate-950 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary-container">analytics</span>
@@ -451,9 +456,9 @@ const Engine = () => {
 
                   {/* Quality Tier Badge */}
                   {analysisResult.quality_tier && analysisResult.quality_tier !== 'high' && (
-                    <div className={`p-3 rounded-lg flex items-center gap-2.5 border ${
+                    <div className={`p-4 rounded-lg flex items-center gap-2.5 border-l-4 shadow-sm ${
                       analysisResult.quality_tier === 'low'
-                        ? 'bg-slate-100 border-slate-300'
+                        ? 'bg-slate-50 border-slate-300'
                         : analysisResult.quality_tier === 'old'
                         ? 'bg-amber-50 border-amber-300'
                         : 'bg-blue-50 border-blue-200'
@@ -482,7 +487,7 @@ const Engine = () => {
                     </div>
                   )}
 
-                  <div className="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary-container shadow-sm">
+                  <div className="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary-container shadow-sm mt-1">
                     <div className="flex justify-between items-start mb-3">
                       <span className="text-[10px] font-bold text-white bg-primary-container px-1.5 py-0.5 rounded">ENSEMBLE_BREAKDOWN</span>
                       <span className="text-[10px] font-mono text-slate-400">
@@ -496,10 +501,17 @@ const Engine = () => {
                           { key: 'manipulation_score', label: 'Semantic Manipulation', icon: 'masks' },
                           { key: 'realism_score',      label: 'Realism Consistency',  icon: 'visibility' },
                           { key: 'fourier_spectral',   label: 'Spectral Marker (FFT)',icon: 'graphic_eq' },
+                          { key: 'ela_score',          label: 'Compression (ELA)',    icon: 'layers' },
+                          { key: 'texture_score',      label: 'Micro-Texture (LBP)',  icon: 'texture' },
+                          { key: 'noise_score',        label: 'Noise Residual (SRM)', icon: 'grain' },
+                          { key: 'geometric_alignment',label: 'Face Alignment',       icon: 'face' },
+                          { key: 'wavelet_sig',        label: 'Wavelet Energy',        icon: 'waves' },
+                          { key: 'temporal_flicker',   label: 'Video Flickering',     icon: 'movie_edit' },
                         ].map(({ key, label, icon }) => {
                           const val = analysisResult.breakdown[key] ?? 0;
                           const pct = Math.round(val * 100);
                           const isFake = val >= 0.4;
+
                           return (
                             <div key={key}>
                               <div className="flex justify-between items-center mb-1">
@@ -544,18 +556,23 @@ const Engine = () => {
         </div>
       </div>
       
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="mt-2 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
         {[
-          { key: 'diffusion_score',    label: 'Diffusion Score',       icon: 'magic_button', weight: 'SOTA' },
-          { key: 'manipulation_score', label: 'Manipulation Score',    icon: 'masks',        weight: 'SOTA' },
-          { key: 'realism_score',      label: 'Natural Consistency',   icon: 'visibility',   weight: 'SOTA' },
-          { key: 'fourier_spectral',   label: 'Physical Evidence',     icon: 'graphic_eq',   weight: 'FFT' },
+          { key: 'diffusion_score',    label: 'Diffusion Score',       icon: 'magic_button', weight: 'ML' },
+          { key: 'manipulation_score', label: 'Facial Geometry',       icon: 'masks',        weight: 'CV' },
+          { key: 'fourier_spectral',   label: 'FFT Analysis',          icon: 'graphic_eq',   weight: 'FFT' },
+          { key: 'ela_score',          label: 'ELA Compression',       icon: 'layers',       weight: 'JPEG' },
+          { key: 'texture_score',      label: 'LBP Texture',           icon: 'texture',      weight: 'LBP' },
+          { key: 'noise_score',        label: 'SRM Noise',             icon: 'grain',        weight: 'SRM' },
+          { key: 'geometric_alignment',label: 'Face Alignment',       icon: 'face',         weight: 'BIO' },
+          { key: 'wavelet_sig',        label: 'Wavelet Energy',        icon: 'waves',        weight: 'DWT' },
         ].map(({ key, label, icon, weight }) => {
+
           const val = analysisResult?.breakdown?.[key];
           const pct = val !== undefined ? Math.round(val * 100) : null;
           const isFake = pct !== null && pct >= 40;
           return (
-            <div key={key} className="bg-surface-container-lowest p-6 rounded-xl space-y-4 border border-surface-container-high">
+            <div key={key} className="bg-surface-container-lowest p-4 rounded-xl space-y-2 border border-surface-container-high">
               <div className="flex justify-between items-start">
                 <h4 className="font-manrope font-bold text-slate-950 flex items-center gap-2 text-sm">
                   <span className="material-symbols-outlined text-primary-container text-[18px]">{icon}</span>

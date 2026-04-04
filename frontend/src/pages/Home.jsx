@@ -19,9 +19,16 @@ const Home = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <NavLink to="/login" className="text-slate-500 font-medium hover:text-slate-900">Register</NavLink>
+            <NavLink 
+              to="/login" 
+              state={{ mode: 'register' }}
+              className="text-slate-500 font-medium hover:text-slate-900"
+            >
+              Register
+            </NavLink>
             <NavLink 
               to="/login"
+              state={{ mode: 'login' }}
               className="bg-primary-container text-white text-sm px-6 py-2.5 rounded-xl font-semibold transition-all active:opacity-80 active:scale-95 shadow-[0_4px_12px_rgba(0,20,83,0.1)] hover:shadow-lg hover:shadow-primary-container/20"
             >
               Sign In
@@ -50,6 +57,7 @@ const Home = () => {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <NavLink 
                 to="/login"
+                state={{ mode: 'register' }}
                 className="bg-primary-container text-white px-10 py-5 rounded-2xl font-bold text-lg hover:shadow-[0_20px_40px_-5px_rgba(0,20,83,0.25)] hover:-translate-y-1 transition-all text-center"
               >
                 Start Free Analysis
@@ -174,17 +182,12 @@ const Home = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               {[
                 { 
                   title: "Deep Image Forensics", 
                   desc: "Metadata and pixel-level analysis to uncover invisible editing traces and generative AI footprints.", 
                   icon: "image" 
-                },
-                { 
-                  title: "Synthetic Voice Detection", 
-                  desc: "Identifying vocoder artifacts and non-human harmonic structures in synthesized audio samples.", 
-                  icon: "settings_voice" 
                 },
                 { 
                   title: "Video Inconsistency Scan", 
@@ -202,7 +205,7 @@ const Home = () => {
                       {feat.desc}
                     </p>
                   </div>
-                  <NavLink to="/login" className="text-sm font-bold text-primary-container flex items-center gap-2 group/link uppercase tracking-widest">
+                  <NavLink to="/login" state={{ mode: 'register' }} className="text-sm font-bold text-primary-container flex items-center gap-2 group/link uppercase tracking-widest">
                     Request Module access 
                     <span className="material-symbols-outlined text-sm group-hover/link:translate-x-2 transition-transform">arrow_forward</span>
                   </NavLink>
@@ -226,7 +229,7 @@ const Home = () => {
               <span className="font-headline font-bold text-slate-900 text-2xl tracking-tighter">V Auth</span>
             </div>
             <p className="text-slate-500 font-medium leading-relaxed max-w-md text-lg">
-              The industry standard for synthetic media detection and neural network forensics. Powered by the Sentinel AI ecosystem.
+              The industry standard for synthetic media detection and neural network forensics. Powered by the V-AUTH AI ecosystem.
             </p>
           </div>
           
@@ -244,7 +247,7 @@ const Home = () => {
         </div>
         
         <div className="max-w-7xl mx-auto mt-24 pt-10 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
-          <div>© 2026 V Auth Sentinel Framework. Verification as an Art Form.</div>
+          <div>© 2026 V-AUTH Framework. Verification as an Art Form.</div>
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim"></div>
             Node 07 Cluster Online
