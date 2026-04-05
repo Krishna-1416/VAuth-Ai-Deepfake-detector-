@@ -84,6 +84,10 @@ ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm"}
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@app.get("/")
+async def root():
+    return {"message": "V-Auth API is running", "docs": "/docs"}
+
 @app.get("/health")
 async def health():
     return {
