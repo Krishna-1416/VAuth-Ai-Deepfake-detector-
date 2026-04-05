@@ -54,13 +54,7 @@ app = FastAPI(
 )
 
 # CORS: Whitelist + Global Wildcard Fallback for Dev
-ALLOWED_ORIGINS = [
-    "http://localhost:5173", 
-    "http://127.0.0.1:5173",
-    "https://frontend-rho-puce-idsoazw5wz.vercel.app",
-    "https://frontend-g3g356714-krishna-1416s-projects.vercel.app",
-    "https://v-auth-omega.vercel.app", # Added additional production domain
-]
+ALLOWED_ORIGINS = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -107,6 +101,7 @@ async def detect(
     user=Depends(get_current_user)
 ):
     t_start = time.time()
+    print(f"[Sentinel] Incoming request: /detect from user {user.user.id if user else 'Unknown'}")
 
     contents = await file.read()
     size_mb = len(contents) / (1024 * 1024)
