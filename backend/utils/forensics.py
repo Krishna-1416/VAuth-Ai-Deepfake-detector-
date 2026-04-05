@@ -1,9 +1,15 @@
 import io
 import math
+import sys
+import os
 import numpy as np
 import cv2
 import pywt
 from PIL import Image
+
+# Diagnostic Environment Check
+print(f"[Forensics] Initializing on Python {sys.version}")
+print(f"[Forensics] Working Directory: {os.getcwd()}")
 
 _face_mesh = None
 

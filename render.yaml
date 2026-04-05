@@ -6,10 +6,14 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.10"
       - key: SUPABASE_URL
         value: "https://dfkbrzuzvgkpboeyjwzr.supabase.co"
       - key: SUPABASE_KEY
-        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRma2JyenV6dmdrcGJvZXlqd3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTcwMTQsImV4cCI6MjA5MDgzMzAxNH0.2085D2_YQYSqFSLHnsIEppDgwcvZmBt0_Nysmkqw34E"
+        value: "YOUR_SUPABASE_ANON_KEY"
+      - key: HUGGINGFACE_API_KEY
+        value: "YOUR_HUGGINGFACE_API_KEY"
     disk:
       name: models-cache
       mountPath: /root/.cache/huggingface

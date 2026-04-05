@@ -32,14 +32,18 @@ from utils.forensics import (
 )
 
 # ── Configuration ────────────────────────────────────────────────────────────
-HF_MODEL_ID = "umm-maybe/AI-image-detector"
-HF_API_URL  = f"https://api-inference.huggingface.co/models/{HF_MODEL_ID}"
+HF_MODELS = [
+    "umm-maybe/AI-image-detector",             # Top tier
+    "prithivMLmods/Deep-Fake-Detector-Model",  # Redundant-1
+    "Organika/sdxl-detector",                 # Redundant-2
+]
 
 def _get_api_headers():
     token = os.getenv("HUGGINGFACE_API_KEY", "")
+    headers = {"Connection": "close"} # Prevent stale pool issues
     if token:
-        return {"Authorization": f"Bearer {token}"}
-    return {}
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 # ── API Session Configuration ────────────────────────────────────────────────
 _session = requests.Session()
@@ -125,38 +129,40 @@ def analyse_image(raw_bytes: bytes, mime: str) -> dict:
 # ── HuggingFace Inference API ──────────────────────────────────────────────────
 
 def _hf_api_score(data: bytes) -> float:
-    """Send image to HF Inference API with resilience. Fallback to 0.5 if fails."""
-    try:
-        # Using Session with retries and specific timeout
-        # stream=False ensures we read the whole response into memory
-        response = _session.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=30, stream=False)
-        
-        # If model is loading, wait up to 10s or return 0.5
-        if response.status_code == 503:
-            print("[ImageDetector] Model loading on HF side... waiting 10s.")
-            time.sleep(10)
-            response = _session.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=30, stream=False)
-
-        if response.status_code != 200:
-            print(f"[ImageDetector] API Error {response.status_code}: {response.text[:200]}")
-            return 0.5
-        
-        results = response.json()
-        if not isinstance(results, list): return 0.5
-        
-        labels = {r["label"].lower(): r["score"] for r in results}
-        for fake_key in ("artificial", "ai-generated", "fake", "deepfake"):
-            if fake_key in labels: return float(labels[fake_key])
-        for real_key in ("real", "authentic", "genuine", "natural"):
-            if real_key in labels: return 1.0 - float(labels[real_key])
+    """Send image to HF Inference API with multi-model redundancy."""
+    for model_id in HF_MODELS:
+        api_url = f"https://api-inference.huggingface.co/models/{model_id}"
+        try:
+            # stream=False + Connection: close reduces IncompleteRead risk
+            response = _session.post(api_url, headers=_get_api_headers(), data=data, timeout=25, stream=False)
             
-        return 0.5
-    except requests.exceptions.ChunkedEncodingError as e:
-        print(f"[ImageDetector] Connection interrupted (IncompleteRead): {e}. Falling back to 0.5.")
-        return 0.5
-    except Exception as e:
-        print(f"[ImageDetector] API request failed: {e}")
-        return 0.5
+            if response.status_code == 503:
+                print(f"[ImageDetector] Model {model_id} loading... skipping to next.")
+                continue
+
+            if response.status_code != 200:
+                print(f"[ImageDetector] Model {model_id} error {response.status_code}. skipping.")
+                continue
+            
+            results = response.json()
+            if not isinstance(results, list) or not results: continue
+            
+            labels = {r["label"].lower(): r["score"] for r in results}
+            # Adaptive label mapping
+            for fake_key in ("artificial", "ai-generated", "fake", "deepfake", "label_1"):
+                if fake_key in labels: return float(labels[fake_key])
+            for real_key in ("real", "authentic", "genuine", "natural", "label_0"):
+                if real_key in labels: return 1.0 - float(labels[real_key])
+                
+        except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ConnectionError) as e:
+            print(f"[ImageDetector] Model {model_id} interrupted: {e}. Trying next...")
+            continue
+        except Exception as e:
+            print(f"[ImageDetector] Model {model_id} failed: {e}")
+            continue
+
+    print("[ImageDetector] All HF models failed. Falling back to 0.5.")
+    return 0.5
 
 
 # ── Internal Helpers ──────────────────────────────────────────────────────────
