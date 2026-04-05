@@ -162,19 +162,19 @@ const LiveStream = () => {
         <div>
           <div className="flex items-center gap-3">
             <div className={`h-2 w-2 rounded-full ${isStreaming ? 'bg-slate-950 animate-pulse shadow-[0_0_8px_rgba(0,0,0,0.5)]' : 'bg-slate-300'}`}></div>
-            <h1 className="text-2xl font-black tracking-tighter text-slate-950 uppercase italic">Live Forensic Monitor</h1>
+            <h1 className="text-2xl font-black tracking-tighter text-slate-950 uppercase">Live Forensic Monitor</h1>
           </div>
         </div>
         <div className="flex gap-4">
           <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60 shadow-sm">
             <span className="text-[9px] font-bold text-slate-400 block uppercase mb-1 tracking-widest">Signal Status</span>
-            <span className={`text-sm font-black italic tracking-tighter ${isStreaming ? 'text-slate-950' : 'text-slate-400'}`}>
+            <span className={`text-sm font-black tracking-tighter ${isStreaming ? 'text-slate-950' : 'text-slate-400'}`}>
               {isStreaming ? 'STABLE' : 'OFFLINE'}
             </span>
           </div>
           <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60 shadow-sm">
             <span className="text-[9px] font-bold text-slate-400 block uppercase mb-1 tracking-widest">Accuracy</span>
-            <span className={`text-sm font-black italic ${isStreaming ? 'text-slate-950' : 'text-slate-400'}`}>
+            <span className={`text-sm font-black ${isStreaming ? 'text-slate-950' : 'text-slate-400'}`}>
               {isStreaming ? '99.2%' : '---'}
             </span>
           </div>
@@ -194,16 +194,16 @@ const LiveStream = () => {
           {permissionState === 'pending' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-30">
                <span className="material-symbols-outlined text-6xl text-slate-700 animate-spin mb-4">settings_suggest</span>
-               <p className="text-slate-500 font-black tracking-widest text-[10px] uppercase italic">Authorizing Secure Link...</p>
+               <p className="text-slate-500 font-black tracking-widest text-[10px] uppercase">Authorizing Secure Link...</p>
             </div>
           )}
 
           {permissionState === 'denied' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-30 text-center px-10">
                <span className="material-symbols-outlined text-6xl text-slate-100 mb-4 scale-x-[-1]">report_problem</span>
-               <h2 className="text-white font-black text-xl mb-2 tracking-tighter uppercase italic">Authorization Denied</h2>
+               <h2 className="text-white font-black text-xl mb-2 tracking-tighter uppercase">Authorization Denied</h2>
                <p className="text-slate-500 font-bold text-sm leading-relaxed max-w-sm">Enable camera access to begin monitoring.</p>
-               <button onClick={() => window.location.reload()} className="mt-8 px-8 py-3 bg-white text-slate-950 font-black text-xs rounded-xl hover:scale-105 active:scale-95 transition-all uppercase italic">Retry Connection</button>
+               <button onClick={() => window.location.reload()} className="mt-8 px-8 py-3 bg-white text-slate-950 font-black text-xs rounded-xl hover:scale-105 active:scale-95 transition-all uppercase">Retry Connection</button>
             </div>
           )}
 
@@ -213,7 +213,7 @@ const LiveStream = () => {
                <div className="h-16 w-16 rounded-full bg-slate-950/50 flex items-center justify-center mb-6 border border-white/10 group-hover:scale-110 transition-transform">
                   <span className="material-symbols-outlined text-4xl text-slate-500">videocam_off</span>
                </div>
-               <h3 className="text-white/40 font-black text-xs tracking-[0.3em] uppercase italic">System Offline // Feed Ready</h3>
+               <h3 className="text-white/40 font-black text-xs tracking-[0.3em] uppercase">System Offline // Feed Ready</h3>
                <div className="mt-4 flex gap-2">
                   <div className="h-1 w-8 bg-slate-800 rounded-full"></div>
                   <div className="h-1 w-8 bg-slate-800 rounded-full"></div>
@@ -244,7 +244,7 @@ const LiveStream = () => {
             <div className="absolute bottom-10 left-10 z-20 pointer-events-none">
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-2 w-2 rounded-full bg-slate-100 animate-pulse"></div>
-                <p className="text-[10px] font-black text-white/80 tracking-widest uppercase italic">Targeting Active // Signal High</p>
+                <p className="text-[10px] font-black text-white/80 tracking-widest uppercase">Targeting Active // Signal High</p>
               </div>
               <p className="text-white font-mono text-xs bg-slate-950/80 px-3 py-1.5 rounded-xl border border-white/10 shadow-2xl">L-SYNC: 104.22 // GRID-V: 92.51</p>
             </div>
@@ -255,14 +255,14 @@ const LiveStream = () => {
         <div className="flex flex-col gap-6 h-full overflow-hidden">
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Forensic Control</h3>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Forensic Control</h3>
               <span className={`material-symbols-outlined text-[18px] ${isStreaming ? 'text-slate-950' : 'text-slate-300'}`}>settings_remote</span>
             </div>
             
             {/* START/STOP TACTICAL BUTTON */}
             <button 
               onClick={toggleStream}
-              className={`w-full py-5 rounded-[2rem] font-black text-xs uppercase italic tracking-widest transition-all duration-300 flex items-center justify-center gap-3 border shadow-2xl ${isStreaming 
+              className={`w-full py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-3 border shadow-2xl ${isStreaming 
                 ? 'bg-slate-950 text-white border-slate-950 hover:bg-white hover:text-slate-950' 
                 : 'bg-white text-slate-950 border-slate-200 hover:border-slate-950'
               } active:scale-95`}
@@ -273,7 +273,7 @@ const LiveStream = () => {
 
             <div className="mt-10 space-y-6">
               <div>
-                <div className="flex justify-between items-center text-xs font-black mb-2 italic tracking-tighter">
+                <div className="flex justify-between items-center text-xs font-black mb-2 tracking-tighter">
                   <span className="text-slate-500 uppercase">AI Confidence / Malice</span>
                   <span className={`${(realTimeResult?.composite > 0.4) ? 'text-error' : 'text-slate-950'}`}>
                     {realTimeResult ? `${Math.round(realTimeResult.composite * 100)}%` : '0.0%'}
@@ -306,10 +306,10 @@ const LiveStream = () => {
 
           <div className="bg-slate-950 p-8 rounded-[2.5rem] flex-1 font-mono text-[10px] overflow-hidden flex flex-col shadow-2xl relative border-t border-white/5">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-              <span className="text-white/40 font-black uppercase tracking-widest italic">System Terminal</span>
+              <span className="text-white/40 font-black uppercase tracking-widest">System Terminal</span>
               <div className="flex items-center gap-2">
                 <div className={`h-1.5 w-1.5 rounded-full ${isStreaming ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'bg-slate-700'}`}></div>
-                <span className="text-white/20 text-[9px] font-black italic uppercase">Encryption Enabled</span>
+                <span className="text-white/20 text-[9px] font-black uppercase">Encryption Enabled</span>
               </div>
             </div>
             <div className="space-y-2 overflow-y-auto custom-scrollbar flex-1 pr-2" style={{ scrollbarGutter: 'stable' }}>
@@ -319,7 +319,7 @@ const LiveStream = () => {
                   className={`flex gap-3 opacity-80 hover:opacity-100 transition-opacity ${index === 0 ? 'animate-fade-in' : ''}`}
                 >
                   <span className="text-white/20 font-black shrink-0">[{log.time}]</span>
-                  <span className="text-slate-400 font-medium leading-relaxed italic">{log.msg}</span>
+                  <span className="text-slate-400 font-bold leading-relaxed">{log.msg}</span>
                 </div>
               ))}
             </div>

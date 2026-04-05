@@ -46,12 +46,7 @@ def _get_hf_image_pipe():
     return _hf_image_pipe
 
 
-<<<<<<< HEAD
 # ── MediaPipe (Moved to utils.forensics) ─────────────────────────────
-
-
-=======
->>>>>>> 2480ba645107120b933e213476939e73568dc456
 # ── Main entry ────────────────────────────────────────────────────────────────
 
 def analyse_image(raw_bytes: bytes, mime: str) -> dict:
@@ -209,16 +204,7 @@ def _hf_model_score(pil_img: Image.Image) -> float:
         print(f"[ImageDetector] HF model failed: {e}")
         return 0.5
 
-<<<<<<< HEAD
-
-
 # ── Signal 1 & 2: Frequency & Wavelet (Moved to utils.forensics) ──────────────
-
-
-
-
-=======
->>>>>>> 2480ba645107120b933e213476939e73568dc456
 
 # ── Signal 3: Face Landmark Symmetry ─────────────────────────────────────────
 

@@ -15,7 +15,7 @@ const DashboardLayout = () => {
     <>
       <header className={`fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl h-16 border-b border-slate-200/20 transition-all duration-300 ${isSidebarOpen ? 'lg:pl-72' : 'lg:pl-28'}`}>
         <div className="flex justify-center items-center h-full">
-          <span className="text-xl font-black tracking-tighter text-slate-950 uppercase italic tracking-widest">V-Auth</span>
+          <span className="text-xl font-black tracking-tighter text-slate-950 uppercase tracking-widest">V-Auth</span>
         </div>
       </header>
       
