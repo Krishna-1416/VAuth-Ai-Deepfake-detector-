@@ -11,32 +11,30 @@ def get_face_mesh():
     global _face_mesh
     if _face_mesh is None:
         try:
-            # MediaPipe on some systems (especially Python 3.14+) may have broken 'solutions' submodule
-            import mediapipe.solutions.face_mesh as mp_face_mesh
-            _face_mesh = mp_face_mesh.FaceMesh(
-                static_image_mode=True,
-                max_num_faces=1,
-                refine_landmarks=True,
-                min_detection_confidence=0.4,
-            )
+            import mediapipe as mp
+            # Check if solutions is actually there (it might be missing in some environments)
+            if hasattr(mp, 'solutions') and hasattr(mp.solutions, 'face_mesh'):
+                _face_mesh = mp.solutions.face_mesh.FaceMesh(
+                    static_image_mode=True,
+                    max_num_faces=1,
+                    refine_landmarks=True,
+                    min_detection_confidence=0.4,
+                )
+            else:
+                # Direct submodule import attempt
+                from mediapipe.solutions import face_mesh as mp_fm
+                _face_mesh = mp_fm.FaceMesh(
+                    static_image_mode=True,
+                    max_num_faces=1,
+                    refine_landmarks=True,
+                    min_detection_confidence=0.4,
+                )
         except (AttributeError, ImportError, ModuleNotFoundError) as e:
             print(f"[Forensics] MediaPipe solutions not found or incompatible: {e}")
-            try:
-                # Fallback attempt
-                import mediapipe as mp
-                if hasattr(mp, 'solutions') and hasattr(mp.solutions, 'face_mesh'):
-                    _face_mesh = mp.solutions.face_mesh.FaceMesh(
-                        static_image_mode=True,
-                        max_num_faces=1,
-                        refine_landmarks=True,
-                        min_detection_confidence=0.4,
-                    )
-                else:
-                    print("[Forensics] MediaPipe solutions attribute missing entirely. Face Mesh disabled.")
-                    _face_mesh = "DISABLED"
-            except Exception as e2:
-                print(f"[Forensics] MediaPipe critical failure: {e2}. Face Mesh disabled.")
-                _face_mesh = "DISABLED"
+            _face_mesh = "DISABLED"
+        except Exception as e:
+            print(f"[Forensics] MediaPipe unexpected failure: {e}")
+            _face_mesh = "DISABLED"
     
     return _face_mesh if _face_mesh != "DISABLED" else None
 

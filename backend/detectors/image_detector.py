@@ -19,6 +19,12 @@ import numpy as np
 from PIL import Image
 import cv2
 import piexif
+import logging
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+
+# Suppress noisy logs
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
 from utils.result_builder import build_result
 from utils.forensics import (
     calculate_ela, calculate_lbp, calculate_srm, calculate_fft,
@@ -34,6 +40,16 @@ def _get_api_headers():
     if token:
         return {"Authorization": f"Bearer {token}"}
     return {}
+
+# ── API Session Configuration ────────────────────────────────────────────────
+_session = requests.Session()
+_retries = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[502, 503, 504],
+    raise_on_status=False
+)
+_session.mount("https://", HTTPAdapter(max_retries=_retries))
 
 # ── Main Entry ────────────────────────────────────────────────────────────────
 
@@ -109,18 +125,20 @@ def analyse_image(raw_bytes: bytes, mime: str) -> dict:
 # ── HuggingFace Inference API ──────────────────────────────────────────────────
 
 def _hf_api_score(data: bytes) -> float:
-    """Send image to HF Inference API. Fallback to 0.5 if fails/times out."""
+    """Send image to HF Inference API with resilience. Fallback to 0.5 if fails."""
     try:
-        response = requests.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=20)
+        # Using Session with retries and specific timeout
+        # stream=False ensures we read the whole response into memory
+        response = _session.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=30, stream=False)
         
         # If model is loading, wait up to 10s or return 0.5
         if response.status_code == 503:
             print("[ImageDetector] Model loading on HF side... waiting 10s.")
             time.sleep(10)
-            response = requests.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=20)
+            response = _session.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=30, stream=False)
 
         if response.status_code != 200:
-            print(f"[ImageDetector] API Error {response.status_code}: {response.text}")
+            print(f"[ImageDetector] API Error {response.status_code}: {response.text[:200]}")
             return 0.5
         
         results = response.json()
@@ -132,6 +150,9 @@ def _hf_api_score(data: bytes) -> float:
         for real_key in ("real", "authentic", "genuine", "natural"):
             if real_key in labels: return 1.0 - float(labels[real_key])
             
+        return 0.5
+    except requests.exceptions.ChunkedEncodingError as e:
+        print(f"[ImageDetector] Connection interrupted (IncompleteRead): {e}. Falling back to 0.5.")
         return 0.5
     except Exception as e:
         print(f"[ImageDetector] API request failed: {e}")
