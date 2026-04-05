@@ -58,6 +58,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:5173", 
     "http://127.0.0.1:5173",
     "https://frontend-rho-puce-idsoazw5wz.vercel.app",
+    "https://frontend-g3g356714-krishna-1416s-projects.vercel.app",
     "https://v-auth-omega.vercel.app", # Added additional production domain
 ]
 
