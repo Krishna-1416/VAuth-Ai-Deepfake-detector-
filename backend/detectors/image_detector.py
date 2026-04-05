@@ -1,7 +1,7 @@
 """
-Image Detector — Quality-Aware HuggingFace + Forensic Heuristic Fusion
+Image Detector — Quality-Aware HF Inference API + Forensic Heuristic Fusion
 Signals:
-  0. HuggingFace AI-Image-Detector  (adaptive 35-85%) — Primary ML classifier
+  0. HuggingFace Inference API      (Adaptive Weight)  — Primary ML classifier
   1. FFT + Log-Polar Frequency                       — Grid/checkerboard artifacts
   2. Wavelet Noise DWT                               — Sub-band energy distribution
   3. Face + Iris Forensics                           — Symmetry & eye specularity
@@ -12,124 +12,77 @@ Signals:
 """
 
 import io
-import math
-import struct
+import os
+import time
+import requests
 import numpy as np
 from PIL import Image
 import cv2
 import piexif
-import pywt
 from utils.result_builder import build_result
 from utils.forensics import (
     calculate_ela, calculate_lbp, calculate_srm, calculate_fft,
     calculate_face_alignment, get_face_mesh, calculate_wavelet
 )
 
-# ── HuggingFace Image Classifier (lazy load, cached globally) ────────────────
-_hf_image_pipe = None
-HF_IMAGE_MODEL  = "umm-maybe/AI-image-detector"
+# ── Configuration ────────────────────────────────────────────────────────────
+HF_MODEL_ID = "umm-maybe/AI-image-detector"
+HF_API_URL  = f"https://api-inference.huggingface.co/models/{HF_MODEL_ID}"
 
-def _get_hf_image_pipe():
-    global _hf_image_pipe
-    if _hf_image_pipe is None:
-        import torch
-        from transformers import pipeline
-        device = 0 if torch.cuda.is_available() else -1
-        device_label = "GPU" if device == 0 else "CPU"
-        print(f"[ImageDetector] Loading {HF_IMAGE_MODEL} on {device_label}…")
-        _hf_image_pipe = pipeline(
-            "image-classification",
-            model=HF_IMAGE_MODEL,
-            device=device,
-        )
-        print(f"[ImageDetector] HF model loaded ✓")
-    return _hf_image_pipe
+def _get_api_headers():
+    token = os.getenv("HUGGINGFACE_API_KEY", "")
+    if token:
+        return {"Authorization": f"Bearer {token}"}
+    return {}
 
-
-# ── MediaPipe (Moved to utils.forensics) ─────────────────────────────
-# ── Main entry ────────────────────────────────────────────────────────────────
+# ── Main Entry ────────────────────────────────────────────────────────────────
 
 def analyse_image(raw_bytes: bytes, mime: str) -> dict:
-    """Quality-aware HF model + adaptive forensic heuristic fusion."""
+    """Quality-aware HF API + adaptive forensic heuristic fusion."""
     pil_img = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
     cv_img  = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-    # ── Step 0: Assess image quality (drives weight adaptation) ──
+    # ── Step 0: Assess image quality ──
     quality = _assess_quality(cv_img, pil_img)
-    tier    = quality["tier"]  # 'high' | 'blurry' | 'old' | 'low'
+    tier    = quality["tier"]
 
-    # ── Step 1: Primary HF Classifier ──
-    model_score = _hf_model_score(pil_img)
+    # ── Step 1: Primary HF API Classifier ──
+    model_score = _hf_api_score(raw_bytes)
 
     # ── Step 2: Forensic Heuristics ──
     fft_score, polar_score = calculate_fft(cv_img)
     wavelet_score = calculate_wavelet(cv_img)
     face_score, iris_score, face_results = _face_forensics(pil_img)
     exif_score    = _exif_metadata(raw_bytes)
-    
-    # New Signals
     ela_score     = calculate_ela(cv_img)
     texture_score = calculate_lbp(cv_img)
     noise_score   = calculate_srm(cv_img)
     
-    # Advanced Misalignment Check
     face_alignment = 0.5
     if face_results and face_results.multi_face_landmarks:
         face_alignment = calculate_face_alignment(face_results.multi_face_landmarks[0].landmark)
 
     # ── Step 3: Adaptive Weight Fusion ──
     if tier == "high":
-        w_model   = 0.50  # Balanced
-        w_fft     = 0.20
-        w_polar   = 0.15
-        w_wavelet = 0.15
-        w_face    = 0.10
-        w_exif    = 0.05
-        w_ela     = 0.15
-        w_texture = 0.10
-        w_noise   = 0.10
+        w_model = 0.50
+        h_weights = {"fft": 0.20, "polar": 0.15, "wave": 0.15, "face": 0.10, "exif": 0.05, "ela": 0.15, "tex": 0.10, "noise": 0.10}
     elif tier == "blurry":
-        w_model   = 0.70
-        w_fft     = 0.05
-        w_polar   = 0.05
-        w_wavelet = 0.03
-        w_face    = 0.10
-        w_exif    = 0.05
-        w_ela     = 0.02
-        w_texture = 0.00
-        w_noise   = 0.00
-    elif tier == "old":
-        w_model   = 0.75
-        w_fft     = 0.05
-        w_polar   = 0.05
-        w_wavelet = 0.03
-        w_face    = 0.05
-        w_exif    = 0.05
-        w_ela     = 0.02
-        w_texture = 0.00
-        w_noise   = 0.00
-    else:  # 'low'
-        w_model   = 0.85
-        w_fft     = 0.03
-        w_polar   = 0.02
-        w_wavelet = 0.00
-        w_face    = 0.05
-        w_exif    = 0.00
-        w_ela     = 0.05
-        w_texture = 0.00
-        w_noise   = 0.00
+        w_model = 0.70
+        h_weights = {"fft": 0.05, "polar": 0.05, "wave": 0.03, "face": 0.10, "exif": 0.05, "ela": 0.02, "tex": 0.00, "noise": 0.00}
+    else: # old/low
+        w_model = 0.85
+        h_weights = {"fft": 0.03, "polar": 0.02, "wave": 0.00, "face": 0.05, "exif": 0.00, "ela": 0.05, "tex": 0.00, "noise": 0.00}
 
-    # Normalise heuristic weights
-    h_sum = w_fft + w_polar + w_wavelet + w_face + w_exif + w_ela + w_texture + w_noise
+    h_sum = sum(h_weights.values())
     heuristic_composite = (
-        fft_score                     * (w_fft     / h_sum) +
-        polar_score                   * (w_polar   / h_sum) +
-        wavelet_score                 * (w_wavelet / h_sum) +
-        max(face_score, iris_score)   * (w_face    / h_sum) +
-        exif_score                    * (w_exif    / h_sum) +
-        ela_score                     * (w_ela     / h_sum) +
-        texture_score                 * (w_texture / h_sum) +
-        noise_score                   * (w_noise   / h_sum)
+        fft_score     * (h_weights["fft"]   / h_sum) +
+        polar_score   * (h_weights["polar"] / h_sum) +
+        wavelet_score * (h_weights["wave"]  / h_sum) +
+        max(face_score, iris_score) * (h_weights["face"] / h_sum) +
+        exif_score    * (h_weights["exif"]  / h_sum) +
+        ela_score     * (h_weights["ela"]   / h_sum) +
+        texture_score * (h_weights["tex"]   / h_sum) +
+        noise_score   * (h_weights["noise"] / h_sum)
     ) if h_sum > 0 else 0.5
 
     composite = (model_score * w_model) + (heuristic_composite * (1.0 - w_model))
@@ -153,8 +106,39 @@ def analyse_image(raw_bytes: bytes, mime: str) -> dict:
     result["quality_tier"] = tier
     return result
 
+# ── HuggingFace Inference API ──────────────────────────────────────────────────
 
-# ── Quality Gate: Image Assessment ─────────────────────────────────────────────
+def _hf_api_score(data: bytes) -> float:
+    """Send image to HF Inference API. Fallback to 0.5 if fails/times out."""
+    try:
+        response = requests.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=20)
+        
+        # If model is loading, wait up to 10s or return 0.5
+        if response.status_code == 503:
+            print("[ImageDetector] Model loading on HF side... waiting 10s.")
+            time.sleep(10)
+            response = requests.post(HF_API_URL, headers=_get_api_headers(), data=data, timeout=20)
+
+        if response.status_code != 200:
+            print(f"[ImageDetector] API Error {response.status_code}: {response.text}")
+            return 0.5
+        
+        results = response.json()
+        if not isinstance(results, list): return 0.5
+        
+        labels = {r["label"].lower(): r["score"] for r in results}
+        for fake_key in ("artificial", "ai-generated", "fake", "deepfake"):
+            if fake_key in labels: return float(labels[fake_key])
+        for real_key in ("real", "authentic", "genuine", "natural"):
+            if real_key in labels: return 1.0 - float(labels[real_key])
+            
+        return 0.5
+    except Exception as e:
+        print(f"[ImageDetector] API request failed: {e}")
+        return 0.5
+
+
+# ── Internal Helpers ──────────────────────────────────────────────────────────
 
 def _assess_quality(cv_img: np.ndarray, pil_img: Image.Image) -> dict:
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
@@ -162,93 +146,36 @@ def _assess_quality(cv_img: np.ndarray, pil_img: Image.Image) -> dict:
     laplacian_var = cv2.Laplacian(small, cv2.CV_32F).var()
     blur_score = float(np.clip(laplacian_var / 500.0, 0.0, 1.0))
     
-    hsv = cv2.cvtColor(cv2.resize(cv_img, (256, 256)), cv2.COLOR_BGR2HSV)
-    mean_saturation = float(hsv[:, :, 1].mean())
-    is_grayscale = mean_saturation < 20
-    
-    b, g, r = cv2.split(cv2.resize(cv_img, (256, 256)).astype(np.float32))
-    color_std = float(np.std([r.mean(), g.mean(), b.mean()]))
-    is_sepia = (not is_grayscale) and (mean_saturation < 45) and (color_std < 15)
-    
-    blue_noise = cv2.Laplacian(b, cv2.CV_32F).var()
-    has_film_grain = (blue_noise > 300) and (mean_saturation < 60)
-    
-    is_old = is_grayscale or is_sepia or has_film_grain
-    
     if laplacian_var < 30:    tier = "low"
     elif laplacian_var < 100: tier = "blurry"
-    elif is_old:              tier = "old"
     else:                     tier = "high"
     
-    return {
-        "tier": tier,
-        "blur_score": blur_score,
-        "is_old": is_old,
-        "is_grayscale": is_grayscale
-    }
-
-
-# ── Signal 0: HuggingFace Primary Classifier ──────────────────────────────────
-
-def _hf_model_score(pil_img: Image.Image) -> float:
-    try:
-        pipe = _get_hf_image_pipe()
-        results = pipe(pil_img)
-        labels = {r["label"].lower(): r["score"] for r in results}
-        for fake_key in ("artificial", "ai-generated", "fake", "deepfake"):
-            if fake_key in labels: return float(labels[fake_key])
-        for real_key in ("real", "authentic", "genuine", "natural"):
-            if real_key in labels: return 1.0 - float(labels[real_key])
-        return 0.5
-    except Exception as e:
-        print(f"[ImageDetector] HF model failed: {e}")
-        return 0.5
-
-# ── Signal 1 & 2: Frequency & Wavelet (Moved to utils.forensics) ──────────────
-
-# ── Signal 3: Face Landmark Symmetry ─────────────────────────────────────────
+    return {"tier": tier, "blur_score": blur_score}
 
 def _face_forensics(pil_img: Image.Image) -> (float, float, object):
     try:
         face_mesh = get_face_mesh()
-        if face_mesh is None:
-            return 0.5, 0.5, None
+        if face_mesh is None: return 0.5, 0.5, None
         rgb = np.array(pil_img.resize((640, 640)))
         results = face_mesh.process(rgb)
         if not results or not results.multi_face_landmarks: return 0.5, 0.5, None
+        
         lm = results.multi_face_landmarks[0].landmark
-        bilateral_pairs = [(33, 263), (173, 398), (61, 291), (234, 454), (127, 356)]
+        bilateral_pairs = [(33, 263), (173, 398), (61, 291), (234, 454)]
         symmetry_scores = [abs(lm[l].y - lm[r].y) for l, r in bilateral_pairs]
         mean_asymmetry = np.mean(symmetry_scores)
-        sym_score = 0.5
-        if mean_asymmetry < 0.003: sym_score = 0.8
-        elif mean_asymmetry > 0.04:  sym_score = 0.9
-        else: sym_score = np.clip(1.0 - (mean_asymmetry / 0.025), 0.0, 0.45)
-        left_iris = np.array([[lm[i].x, lm[i].y] for i in range(468, 473)])
-        right_iris = np.array([[lm[i].x, lm[i].y] for i in range(473, 478)])
-        iris_dist = np.linalg.norm(left_iris.mean(axis=0) - right_iris.mean(axis=0))
-        iris_score = 0.0
-        if iris_dist < 0.05 or iris_dist > 0.18: iris_score = 0.75
+        sym_score = np.clip(1.0 - (mean_asymmetry / 0.025), 0.0, 1.0)
+        
+        iris_score = 0.5 # Simplified iris for compact mode
         return float(sym_score), float(iris_score), results
     except Exception:
         return 0.5, 0.5, None
 
-
-# ── Signal 4: EXIF Metadata ───────────────────────────────────────────────────
-
 def _exif_metadata(raw_bytes: bytes) -> float:
     try:
         exif_dict = piexif.load(raw_bytes)
+        tags_count = sum(len(exif_dict.get(ifd, {})) for ifd in ("0th", "Exif", "GPS", "1st"))
+        if tags_count == 0: return 0.55 # Small suspicion if missing
+        return float(np.clip(1.0 - (tags_count / 15.0), 0.05, 1.0))
     except Exception:
         return 0.55
-    all_tags = {}
-    for ifd in ("0th", "Exif", "GPS", "1st"):
-        if ifd in exif_dict: all_tags.update(exif_dict[ifd])
-    if not all_tags: return 0.50
-    found = sum(1 for v in all_tags.values() if v not in (None, b"", ""))
-    score = np.clip(1.0 - (found / 12.0), 0.05, 1.0)
-    return float(score)
-
-
-
-# ── Signal 5, 6, 7: ELA, LBP, SRM (Moved to utils.forensics) ──────────────────

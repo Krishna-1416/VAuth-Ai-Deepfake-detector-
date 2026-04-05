@@ -1,15 +1,17 @@
 services:
   - type: web
-    name: v-auth-backend
+    name: ignition-hackverse-decodex-backend # Renamed for clarity and consistency
     runtime: python
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: SUPABASE_URL
-        value: "https://dfkbrzuzvgkpboeyjwzr.supabase.co"
+        sync: false
       - key: SUPABASE_KEY
-        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRma2JyenV6dmdrcGJvZXlqd3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTcwMTQsImV4cCI6MjA5MDgzMzAxNH0.2085D2_YQYSqFSLHnsIEppDgwcvZmBt0_Nysmkqw34E"
-    disk:
-      name: models-cache
-      mountPath: /root/.cache/huggingface
-      sizeGB: 10
+        sync: false
+      - key: HUGGINGFACE_API_KEY # NEW: Essential for reliable Inference API
+        sync: false
+      - key: PORT
+        value: 8000
+    # REMOVED: Disk section. Persistent disk is NOT allowed on Render Free Tier 
+    # and is no longer needed since we don't store 2GB of local models.
