@@ -30,12 +30,13 @@ from utils.forensics import (
     calculate_ela, calculate_lbp, calculate_srm, calculate_fft,
     calculate_face_alignment, get_face_mesh, calculate_wavelet
 )
+from utils.local_model import local_inference, is_model_loaded, load_local_model
 
 # ── Configuration ────────────────────────────────────────────────────────────
 HF_MODELS = [
-    "umm-maybe/AI-image-detector",             # Top tier
-    "prithivMLmods/Deep-Fake-Detector-Model",  # Redundant-1
-    "Organika/sdxl-detector",                 # Redundant-2
+    "Bombek1/ai-image-detector-siglip-dinov2",    # Best: 99.1% acc, detects Flux/Midjourney V6
+    "sakshamkr1/deitfake-v2",                     # ViT-based: 99.22% acc
+    "shivani1511/deepfake-image-detector-v2",     # Fallback: 99.28% acc
 ]
 
 def _get_api_headers():
@@ -68,6 +69,7 @@ def analyse_image(raw_bytes: bytes, mime: str) -> dict:
 
     # ── Step 1: Primary HF API Classifier ──
     model_score = _hf_api_score(raw_bytes)
+    model_available = model_score != 0.5  # Detect if model actually ran vs fallback
 
     # ── Step 2: Forensic Heuristics ──
     fft_score, polar_score = calculate_fft(cv_img)
@@ -83,7 +85,12 @@ def analyse_image(raw_bytes: bytes, mime: str) -> dict:
         face_alignment = calculate_face_alignment(face_results.multi_face_landmarks[0].landmark)
 
     # ── Step 3: Adaptive Weight Fusion ──
-    if tier == "high":
+    if not model_available:
+        # Model failed - forensics-only mode: boost forensic signals significantly
+        w_model = 0.15
+        h_weights = {"fft": 0.20, "polar": 0.15, "wave": 0.15, "face": 0.15, "exif": 0.05, "ela": 0.15, "tex": 0.10, "noise": 0.10}
+        print(f"[ImageDetector] Using forensic-only analysis (model unavailable). Boosting heuristic weight to 0.85")
+    elif tier == "high":
         w_model = 0.50
         h_weights = {"fft": 0.20, "polar": 0.15, "wave": 0.15, "face": 0.10, "exif": 0.05, "ela": 0.15, "tex": 0.10, "noise": 0.10}
     elif tier == "blurry":
@@ -130,39 +137,98 @@ def analyse_image(raw_bytes: bytes, mime: str) -> dict:
 
 def _hf_api_score(data: bytes) -> float:
     """Send image to HF Inference API with multi-model redundancy."""
-    for model_id in HF_MODELS:
+    for attempt, model_id in enumerate(HF_MODELS):
         api_url = f"https://api-inference.huggingface.co/models/{model_id}"
-        try:
-            # stream=False + Connection: close reduces IncompleteRead risk
-            response = _session.post(api_url, headers=_get_api_headers(), data=data, timeout=25, stream=False)
-            
-            if response.status_code == 503:
-                print(f"[ImageDetector] Model {model_id} loading... skipping to next.")
-                continue
+        retry_count = 0
+        max_retries = 2
 
-            if response.status_code != 200:
-                print(f"[ImageDetector] Model {model_id} error {response.status_code}. skipping.")
-                continue
-            
-            results = response.json()
-            if not isinstance(results, list) or not results: continue
-            
-            labels = {r["label"].lower(): r["score"] for r in results}
-            # Adaptive label mapping
-            for fake_key in ("artificial", "ai-generated", "fake", "deepfake", "label_1"):
-                if fake_key in labels: return float(labels[fake_key])
-            for real_key in ("real", "authentic", "genuine", "natural", "label_0"):
-                if real_key in labels: return 1.0 - float(labels[real_key])
-                
-        except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ConnectionError) as e:
-            print(f"[ImageDetector] Model {model_id} interrupted: {e}. Trying next...")
-            continue
-        except Exception as e:
-            print(f"[ImageDetector] Model {model_id} failed: {e}")
-            continue
+        while retry_count < max_retries:
+            try:
+                # Use a fresh request and avoid stream=False to better handle partial responses
+                headers = _get_api_headers()
 
-    print("[ImageDetector] All HF models failed. Falling back to 0.5.")
-    return 0.5
+                response = _session.post(
+                    api_url,
+                    headers=headers,
+                    data=data,
+                    timeout=60,
+                    stream=True
+                )
+
+                if response.status_code == 503:
+                    print(f"[ImageDetector] Model {model_id} loading... skipping to next.")
+                    break  # Skip to next model, don't retry
+
+                if response.status_code != 200:
+                    print(f"[ImageDetector] Model {model_id} HTTP {response.status_code}. Retrying...")
+                    retry_count += 1
+                    time.sleep(0.5 * (retry_count ** 2))  # Exponential backoff
+                    continue
+
+                # Manually consume chunks to handle IncompleteRead specifically
+                content = b""
+                for chunk in response.iter_content(chunk_size=8192):
+                    content += chunk
+
+                results = requests.utils.json.loads(content)
+                if not isinstance(results, list) or not results:
+                    retry_count += 1
+                    time.sleep(0.5)
+                    continue
+
+                labels = {r["label"].lower(): r["score"] for r in results}
+
+                # Adaptive label mapping
+                for fake_key in ("artificial", "ai-generated", "fake", "deepfake", "label_1"):
+                    if fake_key in labels:
+                        score = float(labels[fake_key])
+                        print(f"[ImageDetector] {model_id} returned {score:.3f}")
+                        return score
+
+                for real_key in ("real", "authentic", "genuine", "natural", "label_0"):
+                    if real_key in labels:
+                        score = 1.0 - float(labels[real_key])
+                        print(f"[ImageDetector] {model_id} returned {score:.3f}")
+                        return score
+
+                # Label mapping failed, try next model
+                break
+
+            except (requests.exceptions.ChunkedEncodingError,
+                    requests.exceptions.ConnectionError,
+                    Exception) as e:
+                # Catch IncompleteRead via general Exception if not explicitly available
+                err_name = type(e).__name__
+                if "IncompleteRead" in err_name:
+                    print(f"[ImageDetector] {model_id} network error (attempt {retry_count+1}/{max_retries}): IncompleteRead")
+                else:
+                    print(f"[ImageDetector] {model_id} network error (attempt {retry_count+1}/{max_retries}): {err_name}")
+
+                retry_count += 1
+                if retry_count < max_retries:
+                    time.sleep(1.0 * retry_count)  # Exponential backoff
+                else:
+                    print(f"[ImageDetector] {model_id} exhausted retries. Moving to next model.")
+                    break
+
+            except requests.exceptions.Timeout:
+                print(f"[ImageDetector] {model_id} timeout. Trying next model.")
+                break
+            except Exception as e:
+                print(f"[ImageDetector] {model_id} critical error: {type(e).__name__}: {str(e)[:100]}")
+                break
+
+    # Fallback to local model if API fails
+    print("[ImageDetector] All HF API models failed. Trying local model...")
+    local_score = local_inference(data)
+    if local_score != 0.5:
+        print(f"[ImageDetector] Local model returned {local_score:.3f}")
+        return local_score
+    
+    # Conservative fallback: if ML fails, lean toward suspicious
+    # Instead of neutral (0.5), return 0.65 (slightly suspicious)
+    print("[ImageDetector] Local model also unavailable. Conservative fallback (0.65).")
+    return 0.65
 
 
 # ── Internal Helpers ──────────────────────────────────────────────────────────

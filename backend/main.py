@@ -23,6 +23,7 @@ from fastapi.responses import JSONResponse
 
 from detectors.image_detector import analyse_image
 from detectors.video_detector import analyse_video, load_video_model
+from utils.local_model import load_local_model, get_model_info
 
 # Load environment variables
 load_dotenv()
@@ -39,9 +40,23 @@ _supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lighter startup — no heavy models loaded locally."""
-    print("[Sentinel] Running in Compact Mode (Remote Inference).")
-    load_video_model() # Configures hints for video detector
+    """Startup - optionally preload local HF model for faster inference."""
+    print("[Sentinel] Starting up...")
+    load_video_model()  # Configures hints for video detector
+    
+    # Try to preload local model (non-blocking if it fails)
+    use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
+    if use_local:
+        print("[Sentinel] Preloading local HuggingFace model...")
+        try:
+            load_local_model()
+            info = get_model_info()
+            print(f"[Sentinel] Local model ready: {info['model_name']} on {info['device']}")
+        except Exception as e:
+            print(f"[Sentinel] Local model preload skipped: {e}")
+    else:
+        print("[Sentinel] Local model disabled (USE_LOCAL_MODEL=false)")
+    
     yield
     print("[Sentinel] Shutting down.")
 
@@ -90,10 +105,11 @@ async def root():
 
 @app.get("/health")
 async def health():
+    model_info = get_model_info()
     return {
         "status": "healthy", 
-        "mode": "compact_inference", 
-        "ram_target": "<512MB",
+        "mode": "hybrid_inference" if model_info["loaded"] else "api_only", 
+        "local_model": model_info,
         "timestamp": time.time()
     }
 

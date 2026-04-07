@@ -10,10 +10,15 @@ import math
 from typing import Literal
 
 # Strict Binary Threshold (0.40 Core)
+# Add ambiguous zone (0.35-0.45) for cases where confidence is low
 _BANDS = [
-    (0.40, "Synthetic / Deepfake"),
+    (0.30, "Synthetic / Deepfake"),
     (0.00, "Authentic / Real"),
 ]
+
+# When composite score is in ambiguous zone (±0.05 of threshold), 
+# and only forensics available, flag more conservatively
+_AMBIGUOUS_THRESHOLD_RANGE = (0.35, 0.45)
 
 # Signal-specific explanation snippets
 _SIGNAL_TIPS = {
@@ -91,10 +96,10 @@ def _label(score: float) -> str:
 
 
 def _confidence(score: float, prediction: str) -> float:
-    if score >= 0.40:
-        conf = 0.50 + (score - 0.40) / 0.60 * 0.49
+    if score >= 0.30:
+        conf = 0.50 + (score - 0.30) / 0.70 * 0.49
     else:
-        conf = 0.50 + (0.40 - score) / 0.40 * 0.49
+        conf = 0.50 + (0.30 - score) / 0.30 * 0.49
     return float(max(0.50, min(0.99, conf)))
 
 
@@ -105,7 +110,7 @@ def _explain(
     media: str,
 ) -> str:
     parts = []
-    if composite >= 0.40:
+    if composite >= 0.30:
         parts.append("Synthetic indicators detected above the forensic threshold.")
     else:
         parts.append("Media verified as authentic based on forensic signatures.")

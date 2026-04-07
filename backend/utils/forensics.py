@@ -18,7 +18,7 @@ def get_face_mesh():
     if _face_mesh is None:
         try:
             import mediapipe as mp
-            # Check if solutions is actually there (it might be missing in some environments)
+            # Try standard solutions API first (most common)
             if hasattr(mp, 'solutions') and hasattr(mp.solutions, 'face_mesh'):
                 _face_mesh = mp.solutions.face_mesh.FaceMesh(
                     static_image_mode=True,
@@ -26,8 +26,10 @@ def get_face_mesh():
                     refine_landmarks=True,
                     min_detection_confidence=0.4,
                 )
+                print("[Forensics] MediaPipe FaceMesh initialized via mp.solutions")
             else:
-                # Direct submodule import attempt
+                print("[Forensics] MediaPipe mp.solutions not available, trying legacy import")
+                # Legacy fallback
                 from mediapipe.solutions import face_mesh as mp_fm
                 _face_mesh = mp_fm.FaceMesh(
                     static_image_mode=True,
@@ -35,13 +37,16 @@ def get_face_mesh():
                     refine_landmarks=True,
                     min_detection_confidence=0.4,
                 )
-        except (AttributeError, ImportError, ModuleNotFoundError) as e:
-            print(f"[Forensics] MediaPipe solutions not found or incompatible: {e}")
+                print("[Forensics] MediaPipe FaceMesh initialized via legacy import")
+        except ImportError as e:
+            print(f"[Forensics] MediaPipe not installed or incompatible: {e}")
+            print(f"[Forensics] To fix: python -m pip install --upgrade mediapipe")
             _face_mesh = "DISABLED"
         except Exception as e:
-            print(f"[Forensics] MediaPipe unexpected failure: {e}")
+            print(f"[Forensics] MediaPipe initialization error: {type(e).__name__}: {e}")
+            print(f"[Forensics] Face forensics DISABLED. Continuing with other heuristics.")
             _face_mesh = "DISABLED"
-    
+
     return _face_mesh if _face_mesh != "DISABLED" else None
 
 def calculate_ela(cv_img: np.ndarray) -> float:
