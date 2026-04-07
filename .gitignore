@@ -1,20 +1,45 @@
+# ===========================================
+# Ignition (Hackverse) - Git Ignore
+# ===========================================
+
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-env/
 venv/
-.env/
+env/
+
+# Node
 node_modules/
 dist/
-.DS_Store
+build/
+*.log
+
+# IDE
 .vscode/
 .idea/
-*.log
-.stitch_cache/
-frontend/node_modules/
-frontend/dist/
+*.swp
+*.swo
+
+# Environment
 .env
-backend/.env
+.env.local
+.env.production
+
+# Cache
+.DS_Store
+.stitch_cache/
+.vercel/
+.turbo/
+
+# Testing
+coverage/
+.pytest_cache/
+
+# ML Models (large files)
+*.pt
+*.pth
+*.onnx
+models/
