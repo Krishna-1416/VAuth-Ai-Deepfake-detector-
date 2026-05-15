@@ -77,7 +77,8 @@ const LiveStream = () => {
         // Initialize WebSocket
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
-        const socket = new WebSocket(`ws://localhost:8000/live?token=${token}`);
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+        const socket = new WebSocket(`${wsUrl}/live?token=${token}`);
         socket.onopen = () => {
           setLogs(prev => [{ id: Date.now(), time: new Date().toLocaleTimeString([], { hour12: false }), msg: 'Secure Forensic Socket ESTABLISHED. Link Live.' }, ...prev]);
         };

@@ -4,6 +4,7 @@
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://vauth-ai-deepfake-detector.onrender.com/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
