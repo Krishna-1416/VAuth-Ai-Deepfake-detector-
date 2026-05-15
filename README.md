@@ -75,32 +75,34 @@ The engine automatically detects image quality tiers and rebalances signal weigh
 ## 🏗️ Architecture
 
 ```
-┌─ Frontend (React 19 + Vite 8) ─────────────────────┐
-│  Engine.jsx (Upload)  LiveStream.jsx (WebSocket)    │
-│  Login.jsx (Supabase Auth)                          │
-└──────────────────────┬──────────────────────────────┘
-                       │
-┌──────────────────────▼──── Backend (FastAPI) ───────┐
-│  main.py — REST / SSE / WebSocket entry point       │
-│       │                                             │
-│       ▼                                             │
-│  orchestrator.py — LangGraph multi-agent DAG        │
-│       │        │         │         │                │
-│       ▼        ▼         ▼         ▼                │
-│  image_    video_   visual_    fact_                │
-│  detector  detector  analyst   checker              │
-│  .py       .py      .py       .py                   │
-│       │        │         │         │                │
-│       ▼        ▼         ▼         ▼                │
-│  forensics.py — FFT / Wavelet / ELA / LBP / SRM     │
-│  result_builder.py — Verdict assembly                │
-└──────┬────────┬──────────────────────────────────────┘
-       │        │
-       ▼        ▼
-┌──────────────────┐  ┌──────────────────────────────┐
-│ Google AI        │  │ Supabase                     │
-│ Gemma 4 26B MoE  │  │ Auth + pgvector RAG          │
-└──────────────────┘  └──────────────────────────────┘
+.
+├── frontend/               React 19 + Vite 8 + Supabase Auth
+│   ├── src/
+│   │   ├── pages/          Upload, LiveStream, Login views
+│   │   ├── components/     Reusable UI components
+│   │   └── lib/            API client, helpers
+│   └── vite.config.js
+│
+├── backend/                FastAPI server
+│   ├── main.py             REST / SSE / WebSocket entry point
+│   ├── detectors/
+│   │   ├── image_detector.py   Heuristics + Gemma 4 fusion
+│   │   └── video_detector.py   Storyboard + Gemma 4 analysis
+│   ├── utils/
+│   │   ├── forensics.py        FFT / Wavelet / ELA / LBP / SRM
+│   │   └── result_builder.py   Verdict assembly
+│   └── requirements.txt
+│
+├── agents/                 LangGraph multi-agent DAG
+│   ├── orchestrator.py     Coordinates CV → Visual Analyst → Synthesis
+│   ├── visual_analyst.py   Gemma 4 26B multimodal reasoning
+│   └── fact_checker.py     RAG context retrieval from Supabase pgvector
+│
+├── scripts/                Utilities
+│   └── populate_forensic_db.py  Seed forensic knowledge base
+│
+├── .env                    GOOGLE_API_KEY + Supabase credentials
+└── vercel.json              Frontend SPA routing config
 ```
 
 ---
