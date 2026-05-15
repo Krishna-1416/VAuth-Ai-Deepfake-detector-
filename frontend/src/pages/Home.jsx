@@ -40,8 +40,8 @@ const Home = () => {
           
           <div className="hidden md:flex items-center gap-8 font-manrope font-medium tracking-tight">
             <a className={`pb-1 transition-all duration-200 ${activeSection === 'platform' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#platform" onClick={(e) => { e.preventDefault(); document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth' }); }}>Platform</a>
-            <a className={`pb-1 transition-all duration-200 ${activeSection === 'forensic-stack' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#forensic-stack" onClick={(e) => { e.preventDefault(); document.getElementById('forensic-stack')?.scrollIntoView({ behavior: 'smooth' }); }}>Technology</a>
             <a className={`pb-1 transition-all duration-200 ${activeSection === 'visual-proof' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#visual-proof" onClick={(e) => { e.preventDefault(); document.getElementById('visual-proof')?.scrollIntoView({ behavior: 'smooth' }); }}>Solutions</a>
+            <a className={`pb-1 transition-all duration-200 ${activeSection === 'forensic-stack' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#forensic-stack" onClick={(e) => { e.preventDefault(); document.getElementById('forensic-stack')?.scrollIntoView({ behavior: 'smooth' }); }}>Technology</a>
           </div>
 
           <div className="flex items-center gap-4">
