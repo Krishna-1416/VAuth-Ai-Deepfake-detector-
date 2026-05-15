@@ -119,9 +119,9 @@ const Login = () => {
         <div className="max-w-md w-full mx-auto">
           <div className="mb-10 text-center">
             {/* Capsule Toggle */}
-            <div className="inline-grid grid-cols-2 p-1.5 bg-surface-container-low rounded-2xl border border-outline-variant/10 mb-10 relative w-64 mx-auto">
+            <div className="inline-grid grid-cols-2 p-1 bg-surface-container-low rounded-2xl border border-outline-variant/10 mb-10 relative w-64 mx-auto">
               <div 
-                className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary-container rounded-xl transition-all duration-300 ease-out shadow-lg ${isRegistering ? 'translate-x-full left-1.5' : 'left-1.5'}`}
+                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary-container rounded-xl transition-all duration-300 ease-out shadow-lg ${isRegistering ? 'left-1/2' : 'left-1'}`}
               ></div>
               <button
                 onClick={() => setIsRegistering(false)}
@@ -236,9 +236,9 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors p-2 flex items-center justify-center"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors flex items-center justify-center w-10 h-10"
                     >
-                      <span className="material-symbols-outlined text-xl leading-none">
+                      <span className="material-symbols-outlined text-[22px] leading-none">
                         {showPassword ? 'visibility_off' : 'visibility'}
                       </span>
                     </button>
