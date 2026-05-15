@@ -115,10 +115,11 @@ from sse_starlette.sse import EventSourceResponse
 tasks = {}
 
 async def run_analysis_task(task_id: str, contents: bytes, mime: str, filename: str, user_id: str, token: str):
-    tasks[task_id] = {
+    # Update existing task object rather than overwriting (to preserve 'logs')
+    tasks[task_id].update({
         "status": "processing",
         "created_at": time.time()
-    }
+    })
     
     media_type = "video" if mime in ALLOWED_VIDEO_TYPES else "image"
     query = f"Perform a deepfake forensic analysis on this {media_type}."
@@ -213,8 +214,9 @@ async def events(task_id: str):
             
             task = tasks[task_id]
             
-            # Send new logs
-            while last_log_idx < len(task["logs"]):
+            # Send new logs (with safety check)
+            if "logs" in task:
+                while last_log_idx < len(task["logs"]):
                 yield {
                     "data": json.dumps({
                         "status": "processing", 
