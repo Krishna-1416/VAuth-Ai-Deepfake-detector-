@@ -217,13 +217,13 @@ async def events(task_id: str):
             # Send new logs (with safety check)
             if "logs" in task:
                 while last_log_idx < len(task["logs"]):
-                yield {
-                    "data": json.dumps({
-                        "status": "processing", 
-                        "message": task["logs"][last_log_idx]
-                    })
-                }
-                last_log_idx += 1
+                    yield {
+                        "data": json.dumps({
+                            "status": "processing", 
+                            "message": task["logs"][last_log_idx]
+                        })
+                    }
+                    last_log_idx += 1
             
             if task["status"] == "completed":
                 yield {
