@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { getApiUrl } from '../lib/constants';
 
 const Engine = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -17,7 +18,7 @@ const Engine = () => {
   useEffect(() => {
     if (!taskId) return;
 
-    const eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/events/${taskId}`);
+    const eventSource = new EventSource(`${getApiUrl()}/events/${taskId}`);
     
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -193,7 +194,7 @@ const Engine = () => {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      const response = await fetch(`${getApiUrl()}${endpoint}`, {
         method: 'POST',
         headers: headers,
         body: formData,

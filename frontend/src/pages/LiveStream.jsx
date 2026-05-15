@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { getWsUrl } from '../lib/constants';
 
 // Memoized Video Component to prevent re-renders on state updates
 const CameraFeed = React.memo(({ isStreaming, videoRef, canvasRef }) => (
@@ -77,7 +78,7 @@ const LiveStream = () => {
         // Initialize WebSocket
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
-        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+        const wsUrl = getWsUrl();
         const socket = new WebSocket(`${wsUrl}/live?token=${token}`);
         socket.onopen = () => {
           setLogs(prev => [{ id: Date.now(), time: new Date().toLocaleTimeString([], { hour12: false }), msg: 'Secure Forensic Socket ESTABLISHED. Link Live.' }, ...prev]);

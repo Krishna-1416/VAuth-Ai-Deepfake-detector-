@@ -48,10 +48,26 @@ _supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ── Startup / Shutdown ────────────────────────────────────────────────────────
 
 @asynccontextmanager
+async def cleanup_tasks_loop():
+    """Background task to clear old tasks and save memory."""
+    while True:
+        await asyncio.sleep(3600)  # Every hour
+        now = time.time()
+        # Remove tasks older than 1 hour
+        to_delete = [tid for tid, t in tasks.items() if now - t.get("created_at", 0) > 3600]
+        if to_delete:
+            print(f"[V-Auth] Maintenance: Purging {len(to_delete)} old tasks.")
+            for tid in to_delete:
+                if tid in tasks:
+                    del tasks[tid]
+
 async def lifespan(app: FastAPI):
     """Startup - V-Auth Forensic Engine."""
     print("[V-Auth] Starting up...")
+    # Start maintenance task
+    maintenance_task = asyncio.create_task(cleanup_tasks_loop())
     yield
+    maintenance_task.cancel()
     print("[V-Auth] Shutting down.")
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -101,7 +117,10 @@ from sse_starlette.sse import EventSourceResponse
 tasks = {}
 
 async def run_analysis_task(task_id: str, contents: bytes, mime: str, filename: str, user_id: str, token: str):
-    tasks[task_id]["status"] = "processing"
+    tasks[task_id] = {
+        "status": "processing",
+        "created_at": time.time()
+    }
     
     media_type = "video" if mime in ALLOWED_VIDEO_TYPES else "image"
     query = f"Perform a deepfake forensic analysis on this {media_type}."
@@ -227,6 +246,8 @@ async def events(task_id: str):
             await asyncio.sleep(0.1)
 
     return EventSourceResponse(event_generator())
+
+
 
 
 @app.websocket("/live")
