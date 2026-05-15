@@ -15,7 +15,6 @@ import requests
 import uvicorn
 import json
 from typing import Optional, List, Union, Any
-from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, WebSocket, WebSocketDisconnect, Depends
@@ -47,7 +46,6 @@ _supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ── Startup / Shutdown ────────────────────────────────────────────────────────
 
-@asynccontextmanager
 async def cleanup_tasks_loop():
     """Background task to clear old tasks and save memory."""
     while True:
