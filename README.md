@@ -74,54 +74,33 @@ The engine automatically detects image quality tiers and rebalances signal weigh
 
 ## 🏗️ Architecture
 
-```mermaid
-%%{init: {'flowchart': {'nodeSpacing': 60, 'rankSpacing': 60}}}%%
-graph TB
-
-    subgraph Frontend["🌐 Frontend (React 19 + Vite 8)"]
-        UI["Engine.jsx — Drag-and-drop detection"]
-        WS["LiveStream.jsx — WebSocket real-time feed"]
-        AUTH["Login.jsx — Supabase Auth"]
-    end
-
-    subgraph Backend["⚡ Backend (FastAPI)"]
-        API["main.py — REST + SSE + WebSocket"]
-        ORCH["orchestrator.py — LangGraph multi-agent DAG"]
-        VA["visual_analyst.py — Gemma 4 26B reasoning"]
-        FC["fact_checker.py — RAG forensic context retrieval"]
-        ID["image_detector.py — Heuristics + Gemma 4 fusion"]
-        VD["video_detector.py — Storyboard + Gemma 4 analysis"]
-        FW["forensics.py — FFT · Wavelet · ELA · LBP · SRM"]
-        RB["result_builder.py — Verdict assembly"]
-    end
-
-    subgraph External["☁️ External Services"]
-        GEMMA["Google AI — Gemma 4 26B (MoE)"]
-        SUPABASE["Supabase — Auth + pgvector RAG"]
-    end
-
-    UI --> API
-    WS --> API
-    AUTH --> SUPABASE
-
-    API --> ORCH
-
-    ORCH --> ID
-    ORCH --> VD
-    ORCH --> VA
-    ORCH --> FC
-
-    ID --> FW
-    VD --> FW
-
-    ID --> GEMMA
-    VD --> GEMMA
-    VA --> GEMMA
-
-    FC --> SUPABASE
-
-    ID --> RB
-    VD --> RB
+```
+┌─ Frontend (React 19 + Vite 8) ─────────────────────┐
+│  Engine.jsx (Upload)  LiveStream.jsx (WebSocket)    │
+│  Login.jsx (Supabase Auth)                          │
+└──────────────────────┬──────────────────────────────┘
+                       │
+┌──────────────────────▼──── Backend (FastAPI) ───────┐
+│  main.py — REST / SSE / WebSocket entry point       │
+│       │                                             │
+│       ▼                                             │
+│  orchestrator.py — LangGraph multi-agent DAG        │
+│       │        │         │         │                │
+│       ▼        ▼         ▼         ▼                │
+│  image_    video_   visual_    fact_                │
+│  detector  detector  analyst   checker              │
+│  .py       .py      .py       .py                   │
+│       │        │         │         │                │
+│       ▼        ▼         ▼         ▼                │
+│  forensics.py — FFT / Wavelet / ELA / LBP / SRM     │
+│  result_builder.py — Verdict assembly                │
+└──────┬────────┬──────────────────────────────────────┘
+       │        │
+       ▼        ▼
+┌──────────────────┐  ┌──────────────────────────────┐
+│ Google AI        │  │ Supabase                     │
+│ Gemma 4 26B MoE  │  │ Auth + pgvector RAG          │
+└──────────────────┘  └──────────────────────────────┘
 ```
 
 ---
@@ -163,10 +142,10 @@ npm run dev
 
 Opens at **`http://localhost:5173`**.
 
-### ☁️ Deployment Guides
+### ☁️ Deployment
 
-- **Backend (Render):** A `render.yaml` configuration is included to seamlessly deploy the FastAPI service on Render as a Web Service.
-- **Frontend (Vercel):** The included `vercel.json` and React router setup directly map to Vercel's SPA routing. Run `python setup_vercel.py` or import the project directory to automatically deploy.
+- **Frontend (Vercel):** The included `vercel.json` handles SPA routing. Import the `frontend/` directory on Vercel to deploy.
+- **Backend (Render):** Deploy `backend/` as a Python web service. Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`.
 
 ---
 
