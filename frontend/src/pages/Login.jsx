@@ -119,19 +119,19 @@ const Login = () => {
         <div className="max-w-md w-full mx-auto">
           <div className="mb-10 text-center">
             {/* Capsule Toggle */}
-            <div className="inline-flex p-1.5 bg-surface-container-low rounded-2xl border border-outline-variant/10 mb-10 relative">
+            <div className="inline-grid grid-cols-2 p-1.5 bg-surface-container-low rounded-2xl border border-outline-variant/10 mb-10 relative w-64 mx-auto">
               <div 
                 className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary-container rounded-xl transition-all duration-300 ease-out shadow-lg ${isRegistering ? 'translate-x-full left-1.5' : 'left-1.5'}`}
               ></div>
               <button
                 onClick={() => setIsRegistering(false)}
-                className={`relative z-10 px-8 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${!isRegistering ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`relative z-10 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${!isRegistering ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 Sign In
               </button>
               <button
                 onClick={() => setIsRegistering(true)}
-                className={`relative z-10 px-8 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${isRegistering ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`relative z-10 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${isRegistering ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 Register
               </button>
@@ -236,9 +236,9 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors p-2"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors p-2 flex items-center justify-center"
                     >
-                      <span className="material-symbols-outlined text-xl">
+                      <span className="material-symbols-outlined text-xl leading-none">
                         {showPassword ? 'visibility_off' : 'visibility'}
                       </span>
                     </button>
