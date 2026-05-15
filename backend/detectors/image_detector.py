@@ -78,7 +78,7 @@ def query_gemma4_forensics(raw_bytes: bytes, heuristics: dict) -> dict:
         import json
         return json.loads(response.text)
     except Exception as e:
-        print(f"[Sentinel] Gemma 4 Error: {e}")
+        print(f"[V-Auth] Gemma 4 Error: {e}")
         return {"fake_probability": 0.5, "forensic_reasoning": "Gemma 4 analysis failed."}
 
 def analyse_image(raw_bytes: bytes, mime: str) -> dict:

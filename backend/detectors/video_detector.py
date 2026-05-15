@@ -79,7 +79,7 @@ def query_gemma4_video(storyboard_bytes: bytes, heuristics: list) -> dict:
         import json
         return json.loads(response.text)
     except Exception as e:
-        print(f"[Sentinel] Gemma 4 Video Error: {e}")
+        print(f"[V-Auth] Gemma 4 Video Error: {e}")
         return {"fake_probability": 0.5, "forensic_reasoning": "Gemma 4 analysis failed."}
 
 def analyse_video(video_path: str) -> dict:

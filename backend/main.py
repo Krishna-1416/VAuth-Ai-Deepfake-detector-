@@ -162,10 +162,11 @@ async def analyze_v2(
     
     tasks[task_id] = {
         "status": "queued",
-        "logs": ["Task queued for processing..."],
-        "result": None
+        "logs": ["Forensic pipeline initialized..."],
     }
     
+    # Try to preload local model (non-blocking if it fails)
+    use_local = os.getenv("USE_LOCAL_MODEL", "false").lower() == "true"
     user_id = user.user.id if user and hasattr(user, 'user') else "guest"
     token = credentials.credentials if credentials else None
     

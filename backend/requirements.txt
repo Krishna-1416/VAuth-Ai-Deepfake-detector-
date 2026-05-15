@@ -17,4 +17,5 @@ langchain-community>=0.0.30
 langchain-core>=0.1.30
 
 # Local HuggingFace Model Support (Optional - GPU recommended)
+# Removed for Render Free Tier compatibility
 google-genai>=0.1.0
