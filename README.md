@@ -24,17 +24,6 @@
 
 ---
 
-## 👥 Team — DecodeX
-
-| # | Member | Role |
-|---|--------|------|
-| 1 | **Shubham More** 
-| 2 | **Krishna Jadhav** 
-| 3 | **Omraj Bhingale** 
-| 4 | **Pranav Kale** 
-
----
-
 ## 🧠 What is V-Auth?
 
 **V-Auth** is a real-time deepfake detection platform powered by **Gemma 4 26B (Multimodal MoE)**. It combines Gemma 4's native vision reasoning with multi-signal forensic heuristics (FFT, Wavelet, ELA, LBP, SRM, face geometry) to determine whether an image or video is authentic or synthetically generated.
