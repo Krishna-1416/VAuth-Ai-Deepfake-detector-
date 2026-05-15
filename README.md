@@ -83,7 +83,7 @@ graph TB
     end
 
     subgraph Backend["⚡ Backend (FastAPI)"]
-        API[main.py<br/>/analyze /events/{id} /live]
+        API["main.py<br/>POST /analyze · GET /events/{id} · WS /live"]
         ORCH[agents/orchestrator.py<br/>LangGraph DAG]
         VA[agents/visual_analyst.py<br/>Gemma 4 26B reasoning]
         FC[agents/fact_checker.py<br/>RAG context retrieval]
