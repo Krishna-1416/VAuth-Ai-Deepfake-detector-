@@ -9,20 +9,45 @@ const Engine = () => {
   const [progress, setProgress] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [taskId, setTaskId] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Simulate progress steps for a better UX during analysis
+  // SSE Listener for real-time logs
   useEffect(() => {
-    let interval;
-    if (isAnalyzing) {
-      interval = setInterval(() => {
-        setProgress((prev) => (prev < 90 ? prev + (Math.random() * 10) : prev));
-      }, 500);
-    } else {
-      setProgress(0);
-    }
-    return () => clearInterval(interval);
-  }, [isAnalyzing]);
+    if (!taskId) return;
+
+    const eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/events/${taskId}`);
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.status === 'failed') {
+        setLogs(prev => [...prev, { status: 'Error', message: data.error, type: 'error' }]);
+        setIsAnalyzing(false);
+        eventSource.close();
+      } else if (data.status === 'Complete') {
+        setAnalysisResult(data.result);
+        setLogs(prev => [...prev, { status: 'Complete', message: 'Forensic report generated.', type: 'success' }]);
+        setIsAnalyzing(false);
+        setProgress(100);
+        eventSource.close();
+      } else {
+        // Log update
+        setLogs(prev => [...prev, { status: data.status, message: data.message || data.thought || '', type: 'log' }]);
+        // Update progress based on status
+        if (data.status.includes('Visual')) setProgress(40);
+        if (data.status.includes('Fact')) setProgress(70);
+      }
+    };
+
+    eventSource.onerror = () => {
+      console.error("SSE connection failed");
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
+  }, [taskId]);
 
   const normalizeImage = (file) => {
     return new Promise((resolve) => {
@@ -140,6 +165,8 @@ const Engine = () => {
     setAnalysisResult(null);
     setProgress(0);
     setIsAnalyzing(false);
+    setLogs([]);
+    setTaskId(null);
   };
 
   const handleDetect = async () => {
@@ -147,37 +174,43 @@ const Engine = () => {
 
     setIsAnalyzing(true);
     setAnalysisResult(null);
+    setLogs([]);
+    setTaskId(null);
+    setProgress(10);
 
     const formData = new FormData();
     formData.append('file', selectedFile);
+    formData.append('query', 'Perform a deepfake forensic analysis on this media.');
 
     try {
+      const isVideo = selectedFile.type.startsWith('video');
+      const endpoint = isVideo ? '/analyze/video' : '/analyze';
+      
+      // Get session for Auth
       const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/detect`, {
+      const headers = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: headers,
         body: formData,
       });
 
-      if (response.status === 401) throw new Error('Unauthorized');
-      if (!response.ok) throw new Error('Backend connection failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Backend connection failed');
+      }
 
       const data = await response.json();
-      setAnalysisResult(data);
-      setProgress(100);
+      setTaskId(data.task_id);
+      setLogs([{ status: 'Queued', message: 'Task initialized. Dispatched forensic agents.', type: 'log' }]);
     } catch (error) {
       console.error('Error:', error);
-      setAnalysisResult({
-        prediction: 'Error',
-        confidence: 0,
-        explanation: 'Failed to connect to V-Auth backend.'
-      });
-    } finally {
       setIsAnalyzing(false);
+      alert('Failed to initiate scan. Is the backend running?');
     }
   };
 
@@ -237,17 +270,12 @@ const Engine = () => {
             
             <div className="flex gap-4 opacity-70">
               <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
-                <span className="material-symbols-outlined text-[14px]">smart_display</span> Video
+                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>smart_display</span> Video
               </span>
               <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
-                <span className="material-symbols-outlined text-[14px]">image</span> Image
+                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>image</span> Image
               </span>
             </div>
-          </div>
-          
-          <div className="mt-8 flex items-center justify-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">
-            <span className="material-symbols-outlined text-sm">lock</span>
-            V-Auth v1.0 • Secure Local Detection active
           </div>
         </div>
       </div>
@@ -259,7 +287,7 @@ const Engine = () => {
     <div className="p-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-4 mb-4">
         <button onClick={handleReset} className="w-8 h-8 flex items-center justify-center border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-full transition-colors text-slate-500 hover:text-slate-900 active:scale-95">
-          <span className="material-symbols-outlined text-[18px]">close</span>
+          <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>close</span>
         </button>
         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cancel & Reset Scan</span>
       </div>
@@ -282,7 +310,7 @@ const Engine = () => {
               onClick={handleDetect}
               className="px-6 py-2 bg-primary-container text-white rounded-full text-xs font-bold tracking-widest hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-sm">analytics</span>
+              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>analytics</span>
               INITIATE SCAN
             </button>
           )}
@@ -329,273 +357,197 @@ const Engine = () => {
               <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0)_49%,rgba(111,251,190,0.1)_50%,rgba(0,0,0,0)_51%)] bg-[length:100%_4px] opacity-10"></div>
             </div>
           </div>
-          
-          <div className="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-6 border border-surface-container-high shadow-sm">
-            <div className="flex-1">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className={`font-manrope font-bold uppercase tracking-widest text-xs ${
-                  analysisResult ? (
-                    analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'text-red-600' :
-                    analysisResult.prediction.includes('Manipulated') ? 'text-error' : 'text-emerald-600'
-                  ) : 'text-slate-900'
+
+          {analysisResult && (
+            <div className="p-5 rounded-2xl border bg-white shadow-lg animate-in slide-in-from-bottom-3 duration-500">
+              <div className="flex items-center justify-between mb-3">
+                <span className={`text-lg font-black uppercase tracking-wider ${
+                  analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                    ? 'text-red-600'
+                    : analysisResult.prediction.includes('Manipulated')
+                    ? 'text-amber-600'
+                    : 'text-emerald-600'
                 }`}>
-                  {isAnalyzing ? "Processing neural layers 3/4" : analysisResult ? "Forensic Authenticity Confirmed" : "System Standby"}
-                </h3>
-                <span className={`text-xs font-bold ${
-                  analysisResult ? (
-                    analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'text-red-500' :
-                    analysisResult.prediction.includes('Manipulated') ? 'text-error' : 'text-emerald-500'
-                  ) : 'text-primary-container'
-                }`}>
-                  {analysisResult ? `${Math.round(analysisResult.confidence * 100)}% Confidence` : `${Math.round(progress)}%`}
+                  <span className="material-symbols-outlined text-lg align-text-bottom mr-1.5" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    {analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                      ? 'dangerous'
+                      : 'verified_user'}
+                  </span>
+                  {analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                    ? 'FAKE'
+                    : 'REAL'}
+                </span>
+                <span className="font-mono text-xl font-black tracking-tighter text-slate-900">
+                  {(analysisResult.confidence * 100).toFixed(1)}%
                 </span>
               </div>
-              <div className="h-3 w-full bg-surface-container-high rounded-full overflow-hidden p-0.5">
-                <div 
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
                   className={`h-full rounded-full transition-all duration-1000 ${
-                    analysisResult ? (
-                      analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'bg-red-500' :
-                      analysisResult.prediction.includes('Manipulated') ? 'bg-error' : 'bg-emerald-500'
-                    ) : 'bg-primary-container'
-                  }`} 
-                  style={{ width: analysisResult ? `${analysisResult.confidence * 100}%` : `${progress}%` }}
-                ></div>
+                    analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                      ? 'bg-red-500'
+                      : analysisResult.prediction.includes('Manipulated')
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${Math.round(analysisResult.confidence * 100)}%` }}
+                />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 border-l border-surface-container-high pl-6">
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">State</p>
-                <p className="text-2xl font-extrabold text-slate-950">
-                  {isAnalyzing ? "Active" : analysisResult ? "Done" : "Idle"}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Prediction</p>
-                <div className="flex items-center gap-2">
-                  <span className={`text-2xl font-extrabold ${
-                    analysisResult?.prediction?.includes('Diffusion') ? 'text-blue-500' : 
-                    analysisResult?.prediction?.includes('Manipulated') ? 'text-error' : 'text-emerald-500'
-                  }`}>
-                    {analysisResult?.prediction || "--"}
-                  </span>
-                  {analysisResult && (
-                    <span className={`material-symbols-outlined ${
-                      analysisResult.prediction.includes('Diffusion') ? 'text-blue-500' : 
-                      analysisResult.prediction.includes('Manipulated') ? 'text-error' : 'text-emerald-500'
-                    }`}>
-                      {analysisResult.prediction.includes('Diffusion') ? 'magic_button' : 
-                       analysisResult.prediction.includes('Manipulated') ? 'warning' : 'verified'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
+          
         </div>
         
         <div className="col-span-12 xl:col-span-4 space-y-6">
-          <div className="bg-surface-container-lowest rounded-xl p-4 h-[calc(100%-88px)] flex flex-col border border-surface-container-high shadow-sm">
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-surface-container-high">
-              <h2 className="font-manrope font-extrabold text-slate-950 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary-container">analytics</span>
-                Detection Stream
+          <div className="bg-white/60 backdrop-blur-2xl rounded-3xl p-6 h-[calc(107vh-14rem)] flex flex-col border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.03)]">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+              <h2 className="font-manrope font-black text-slate-900 flex items-center gap-3 text-sm tracking-tight">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
+                  <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
+                </div>
+                DETECTION_STREAM
               </h2>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Live Output</span>
+              <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                CORE_ENGINE_ACTIVE
+              </span>
             </div>
             <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-              {isAnalyzing && (
+              {isAnalyzing && logs.length === 0 && (
                 <div className="animate-pulse space-y-4">
                   <div className="h-24 bg-slate-50 border border-slate-100 rounded-lg"></div>
                   <div className="h-24 bg-slate-50 border border-slate-100 rounded-lg"></div>
                 </div>
               )}
 
+              {logs.map((log, i) => (
+                <div key={i} className={`p-3 rounded-lg border-l-2 text-[11px] font-medium leading-relaxed animate-in slide-in-from-left-2 duration-300 ${
+                  log.type === 'error' ? 'bg-red-50 border-red-500 text-red-700' :
+                  log.type === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-700' :
+                  'bg-slate-50 border-slate-200 text-slate-600'
+                }`}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-black uppercase tracking-tighter opacity-50">{log.status}</span>
+                    <span className="text-[9px] opacity-40">Just now</span>
+                  </div>
+                  {log.message}
+                </div>
+              ))}
+
               {analysisResult && (
                 <>
                   {/* ── Verdict card with confidence bar ── */}
-                  <div className={`p-4 rounded-lg border-l-4 shadow-sm ${
+                  <div className={`p-5 rounded-2xl border border-white shadow-xl animate-in zoom-in-95 duration-500 ${
                       analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
-                        ? 'bg-red-50 border-red-500'
+                        ? 'bg-gradient-to-br from-red-50 to-rose-50/30'
                         : analysisResult.prediction.includes('Manipulated')
-                        ? 'bg-error-container/10 border-error'
-                        : 'bg-emerald-50 border-emerald-500'
+                        ? 'bg-gradient-to-br from-amber-50 to-orange-50/30'
+                        : 'bg-gradient-to-br from-emerald-50 to-teal-50/30'
                     }`}>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                          analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
-                            ? 'text-red-600'
-                            : analysisResult.prediction.includes('Manipulated')
-                            ? 'text-error'
-                            : 'text-emerald-600'
-                        }`}>
-                          Verdict: {analysisResult.prediction}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {(analysisResult.confidence * 100).toFixed(1)}%
-                        </span>
-                      </div>
-
-                      {/* Mini confidence bar */}
-                      <div className="h-1.5 w-full bg-white/70 rounded-full overflow-hidden my-2">
-                        <div
-                          className={`h-full rounded-full transition-all duration-1000 ${
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`material-symbols-outlined text-[20px] ${
+                            analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'text-red-600' : 'text-emerald-600'
+                          }`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                            {analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'dangerous' : 'verified_user'}
+                          </span>
+                          <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${
                             analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
-                              ? 'bg-red-500'
+                              ? 'text-red-700'
                               : analysisResult.prediction.includes('Manipulated')
-                              ? 'bg-error'
-                              : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${Math.round(analysisResult.confidence * 100)}%` }}
-                        />
+                              ? 'text-amber-700'
+                              : 'text-emerald-700'
+                          }`}>
+                            FORENSIC_VERDICT
+                          </span>
+                        </div>
+                        <span className="font-mono text-xs font-black opacity-40">
+                          LOG_ID: {taskId?.slice(0, 8)}
+                        </span>
                       </div>
 
-                      <p className="text-xs text-slate-600 mt-2 leading-relaxed font-medium">
-                        {analysisResult.explanation}
-                      </p>
-                    </div>
+                      <div className="text-xs text-slate-700 leading-relaxed font-medium mb-4 bg-white/40 p-4 rounded-xl border border-white/60">
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-900/5">
+                          <span className="font-black text-slate-900 uppercase tracking-tight">VERDICT</span>
+                          <span className="text-slate-300">|</span>
+                          <span className="font-bold text-slate-500 uppercase tracking-tight">FORENSIC REPORT</span>
+                        </div>
+                        {analysisResult.explanation.replace(/\*\*/g, '')}
+                      </div>
 
-                  {/* Quality Tier Badge */}
-                  {analysisResult.quality_tier && analysisResult.quality_tier !== 'high' && (
-                    <div className={`p-4 rounded-lg flex items-center gap-2.5 border-l-4 shadow-sm ${
-                      analysisResult.quality_tier === 'low'
-                        ? 'bg-slate-50 border-slate-300'
-                        : analysisResult.quality_tier === 'old'
-                        ? 'bg-amber-50 border-amber-300'
-                        : 'bg-blue-50 border-blue-200'
-                    }`}>
-                      <span className={`material-symbols-outlined text-[18px] ${
-                        analysisResult.quality_tier === 'old' ? 'text-amber-500' : 'text-blue-400'
-                      }`}>
-                        {analysisResult.quality_tier === 'old' ? 'history_edu' : 'deblur'}
-                      </span>
-                      <div>
-                        <p className={`text-[10px] font-bold uppercase tracking-widest ${
-                          analysisResult.quality_tier === 'old' ? 'text-amber-600' : 'text-blue-600'
-                        }`}>
-                          {analysisResult.quality_tier === 'old' ? 'Old / Film Photo Detected' :
-                           analysisResult.quality_tier === 'low'  ? 'Very Low Quality Image' :
-                           'Blurry Image Detected'}
-                        </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">
-                          {analysisResult.quality_tier === 'old'
-                            ? 'Frequency signals suppressed. HF model weighted at 75%.'
-                            : analysisResult.quality_tier === 'low'
-                            ? 'Heuristics unreliable. HF model weighted at 85%.'
-                            : 'FFT/Wavelet suppressed. HF model weighted at 72%.'}
-                        </p>
+                      <div className="flex items-center justify-between gap-4">
+                         <div className="flex-1 h-1.5 bg-white/60 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-1000 ${
+                                analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'bg-red-500' : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${Math.round(analysisResult.confidence * 100)}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-sm font-black text-slate-900">
+                             {(analysisResult.confidence * 100).toFixed(1)}%
+                          </span>
                       </div>
                     </div>
-                  )}
 
-                  <div className="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary-container shadow-sm mt-1">
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-[10px] font-bold text-white bg-primary-container px-1.5 py-0.5 rounded">ENSEMBLE_BREAKDOWN</span>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {analysisResult.quality_tier === 'high' || !analysisResult.quality_tier ? '4 METHODS' : `ADAPTIVE · ${(analysisResult.quality_tier || '').toUpperCase()}`}
-                      </span>
-                    </div>
-                    {analysisResult.breakdown && (
-                      <div className="space-y-2.5">
-                        {[
-                          { key: 'diffusion_score',    label: 'Diffusion Origin',     icon: 'magic_button' },
-                          { key: 'manipulation_score', label: 'Semantic Manipulation', icon: 'masks' },
-                          { key: 'realism_score',      label: 'Realism Consistency',  icon: 'visibility' },
-                          { key: 'fourier_spectral',   label: 'Spectral Marker (FFT)',icon: 'graphic_eq' },
-                          { key: 'ela_score',          label: 'Compression (ELA)',    icon: 'layers' },
-                          { key: 'texture_score',      label: 'Micro-Texture (LBP)',  icon: 'texture' },
-                          { key: 'noise_score',        label: 'Noise Residual (SRM)', icon: 'grain' },
-                          { key: 'geometric_alignment',label: 'Face Alignment',       icon: 'face' },
-                          { key: 'wavelet_sig',        label: 'Wavelet Energy',        icon: 'waves' },
-                          { key: 'temporal_flicker',   label: 'Video Flickering',     icon: 'movie_edit' },
-                        ].map(({ key, label, icon }) => {
-                          const val = analysisResult.breakdown[key] ?? 0;
-                          const pct = Math.round(val * 100);
-                          const isFake = val >= 0.4;
 
-                          return (
-                            <div key={key}>
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-600">
-                                  <span className="material-symbols-outlined text-[12px]">{icon}</span>
-                                  {label}
-                                </span>
-                                <span className={`text-[10px] font-bold ${isFake ? 'text-error' : 'text-tertiary-fixed'}`}>
-                                  {pct}%
-                                </span>
-                              </div>
-                              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all duration-700 ${isFake ? 'bg-error' : 'bg-tertiary-fixed'}`}
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
                 </>
               )}
 
               {!isAnalyzing && !analysisResult && (
-                <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50 py-12">
-                  <span className="material-symbols-outlined text-5xl mb-3">mystery</span>
-                  <p className="text-[10px] font-bold tracking-[0.2em] text-center">AWAITING NEURAL<br/>INITIATION</p>
+                <div className="h-full flex flex-col items-center justify-center text-slate-300 py-12">
+                   <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-100">
+                      <span className="material-symbols-outlined text-3xl text-slate-300">visibility_lock</span>
+                   </div>
+                  <p className="text-[10px] font-black tracking-[0.3em] text-center text-slate-400">AWAITING_INPUT_STREAM</p>
                 </div>
               )}
             </div>
             
-            <div className="mt-6 pt-6 border-t border-surface-container-high">
-              <button disabled={!analysisResult} className="w-full py-3 bg-slate-900 text-white font-manrope font-bold text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-20 shadow-lg">
-                <span className="material-symbols-outlined text-sm">picture_as_pdf</span>
-                Export Forensic Evidence
-              </button>
-            </div>
+
           </div>
         </div>
       </div>
       
-      <div className="mt-2 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+      {/* FORENSIC PARAMETER GRID */}
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
         {[
-          { key: 'diffusion_score',    label: 'Diffusion Score',       icon: 'magic_button', weight: 'ML' },
-          { key: 'manipulation_score', label: 'Facial Geometry',       icon: 'masks',        weight: 'CV' },
-          { key: 'fourier_spectral',   label: 'FFT Analysis',          icon: 'graphic_eq',   weight: 'FFT' },
-          { key: 'ela_score',          label: 'ELA Compression',       icon: 'layers',       weight: 'JPEG' },
-          { key: 'texture_score',      label: 'LBP Texture',           icon: 'texture',      weight: 'LBP' },
-          { key: 'noise_score',        label: 'SRM Noise',             icon: 'grain',        weight: 'SRM' },
-          { key: 'geometric_alignment',label: 'Face Alignment',       icon: 'face',         weight: 'BIO' },
-          { key: 'wavelet_sig',        label: 'Wavelet Energy',        icon: 'waves',        weight: 'DWT' },
+          { key: 'diffusion_score',    label: 'DIFFUSION',      icon: 'magic_button', weight: 'ML_CORE' },
+          { key: 'manipulation_score', label: 'GEOMETRY',       icon: 'masks',        weight: 'CV_NODE' },
+          { key: 'fourier_spectral',   label: 'FFT_SCAN',       icon: 'graphic_eq',   weight: 'SPECTRAL' },
+          { key: 'ela_score',          label: 'ELA_MAP',        icon: 'layers',       weight: 'JPEG_FS' },
+          { key: 'texture_score',      label: 'LBP_TEX',        icon: 'texture',      weight: 'TEXTURE' },
+          { key: 'noise_score',        label: 'SRM_NOISE',      icon: 'grain',        weight: 'NOISE_FS' },
+          { key: 'geometric_alignment',label: 'ALIGNMENT',      icon: 'face',         weight: 'BIOMETRIC' },
+          { key: 'wavelet_sig',        label: 'WAVELET',        icon: 'waves',        weight: 'DWT_CORE' },
         ].map(({ key, label, icon, weight }) => {
-
           const val = analysisResult?.breakdown?.[key];
           const pct = val !== undefined ? Math.round(val * 100) : null;
           const isFake = pct !== null && pct >= 40;
           return (
-            <div key={key} className="bg-surface-container-lowest p-4 rounded-xl space-y-2 border border-surface-container-high">
-              <div className="flex justify-between items-start">
-                <h4 className="font-manrope font-bold text-slate-950 flex items-center gap-2 text-sm">
-                  <span className="material-symbols-outlined text-primary-container text-[18px]">{icon}</span>
-                  {label}
-                </h4>
-                <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-widest">{weight}</span>
+            <div key={key} className="bg-slate-900/5 backdrop-blur-md p-4 rounded-[2rem] space-y-4 border border-white/40 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1 duration-500">
+              <div className="flex justify-between items-center">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors duration-500 ${isFake ? 'bg-red-500 text-white' : 'bg-slate-900 text-white'}`}>
+                  <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
+                </div>
+                <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg tracking-[0.1em]">{weight}</span>
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-500">Anomaly Score</span>
-                  <span className={`text-sm font-extrabold ${pct !== null ? (isFake ? 'text-error' : 'text-tertiary-fixed') : 'text-slate-300'}`}>
-                    {pct !== null ? `${pct}%` : '--'}
-                  </span>
+                <div>
+                  <h4 className="font-manrope font-black text-slate-900 text-[10px] uppercase tracking-[0.1em] mb-1">{label}</h4>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`font-mono text-2xl font-black tracking-tighter ${pct !== null ? (isFake ? 'text-red-500' : 'text-emerald-500') : 'text-slate-200'}`}>
+                      {pct !== null ? `${pct}%` : '--'}
+                    </span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">ANOMALY</span>
+                  </div>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-1000 ${isFake ? 'bg-error' : 'bg-primary-container'}`}
+                    className={`h-full rounded-full transition-all duration-1000 ${isFake ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]' : 'bg-emerald-500'}`}
                     style={{ width: pct !== null ? `${pct}%` : '0%' }}
                   />
                 </div>
-                <p className="text-[9px] font-bold text-slate-400 text-center tracking-widest uppercase">
-                  {pct !== null ? (isFake ? '⚡ Artifact detected' : '✓ Clean') : 'Awaiting scan'}
-                </p>
               </div>
             </div>
           );

@@ -1,12 +1,13 @@
 <p align="center">
   <img src="https://img.shields.io/badge/SENTINEL-Deepfake%20Detection-00ff88?style=for-the-badge&logo=shield&logoColor=white" alt="Sentinel Badge"/>
+  <img src="https://img.shields.io/badge/Gemma%204%20Good-Submitted-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemma 4 Good Badge"/>
 </p>
 
 <h1 align="center">🛡️ V-Auth — AI-Powered Deepfake Detection Platform</h1>
 
 <p align="center">
   <b>Decode what's real. Expose what's not.</b><br/>
-  A forensic-grade deepfake detection engine built for <b>Hackverse × Ignition Hackathon</b>
+  A forensic-grade deepfake detection engine powered by <b>Gemma 4 26B</b> — built for <b>Gemma 4 Good Hackathon</b>
 </p>
 
 <p align="center">
@@ -14,8 +15,8 @@
   <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat-square&logo=fastapi&logoColor=white"/>
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black"/>
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white"/>
-  <img src="https://img.shields.io/badge/PyTorch-2.2+-EE4C2C?style=flat-square&logo=pytorch&logoColor=white"/>
-  <img src="https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=flat-square&logo=huggingface&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Gemma%204-26B-4285F4?style=flat-square&logo=google&logoColor=white"/>
+  <img src="https://img.shields.io/badge/LangGraph-0.3-FFD21E?style=flat-square"/>
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white"/>
   <img src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white"/>
   <img src="https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white"/>
@@ -36,28 +37,31 @@
 
 ## 🧠 What is V-Auth?
 
-**V-Auth** is a real-time deepfake detection platform that combines **pre-trained AI classifiers** with **multi-signal forensic heuristics** to determine whether an image or video is authentic or synthetically generated.
+**V-Auth** is a real-time deepfake detection platform powered by **Gemma 4 26B (Multimodal MoE)**. It combines Gemma 4's native vision reasoning with multi-signal forensic heuristics (FFT, Wavelet, ELA, LBP, SRM, face geometry) to determine whether an image or video is authentic or synthetically generated.
 
-Unlike tools that rely on a single model prediction, V-Auth uses an **ensemble fusion engine** — blending AI model confidence with frequency-domain analysis, wavelet decomposition, facial geometry forensics, and metadata inspection — all adaptively weighted based on the input's quality tier.
+Unlike black-box detectors, V-Auth uses a **Gemma 4-centric ensemble architecture**: forensic signals are extracted mathematically, but the final verdict and explanation come from Gemma 4's multimodal reasoning — producing transparent, explainable results. A LangGraph multi-agent workflow orchestrates CV engines, a Gemma 4 Visual Analyst, and a RAG-based Fact-Checker.
 
 ---
 
 ## ✨ Key Features
 
 ### 🔍 Image Detection Engine
-- **AI Classifier** — HuggingFace [`umm-maybe/AI-image-detector`](https://huggingface.co/umm-maybe/AI-image-detector) (ViT fine-tuned on AI vs Real images)
+- **Gemma 4 26B Multimodal Reasoning** — `google.gemini` SDK calls `gemma-4-26b-a4b-it` with image + heuristic context for structured forensic verdict
 - **FFT Spectral Analysis** — Detects periodic checkerboard artifacts from GAN/Diffusion upsampling
 - **Log-Polar FFT** — Converts radial artifacts into detectable linear patterns
 - **Wavelet Noise (DWT)** — Identifies unnaturally smooth sub-band energy (Daubechies-2)
+- **Error Level Analysis (ELA)** — Detects local compression inconsistencies
+- **LBP Texture Forensics** — Measures micro-texture regularity in synthetic skin/surfaces
+- **SRM Noise Residuals** — Geometric noise fingerprint analysis
 - **Face & Iris Forensics** — MediaPipe landmark symmetry + bilateral iris consistency
 - **EXIF Metadata Scoring** — Penalizes images lacking authentic camera metadata
 
 ### 🎬 Video Detection Engine
-- **SigLIP2 Vision Transformer** — HuggingFace [`prithivMLmods/Deepfake-Detect-Siglip2`](https://huggingface.co/prithivMLmods/Deepfake-Detect-Siglip2) fine-tuned on deepfake datasets
-- **Keyframe Sampling** — Extracts up to 15 frames at 1 FPS via OpenCV
-- **Batch Inference** — Processes frames in batches of 4 for efficiency
-- **Temporal Flicker Detection** — Measures forensic signature variance across the timeline
-- **Outlier-Weighted Aggregation** — High-confidence frames carry 2× weight
+- **Gemma 4 26B Temporal Analysis** — Same model as image; analyzes multi-frame storyboard for temporal consistency
+- **Keyframe Sampling** — Extracts up to 8 frames at 1 FPS via OpenCV for storyboard construction
+- **Per-Frame Heuristics** — FFT, ELA, LBP, SRM, Wavelet, and face alignment extracted per frame
+- **Gemma 4 Storyboard Fusion** — Frames composited into a grid; Gemma 4 evaluates cross-frame flicker, texture drift, and lip-sync consistency
+- **Temporal Flicker Detection** — Measures forensic signature variance across the timeline as additional signal
 
 ### 🧬 Quality-Aware Adaptive Fusion
 The engine automatically detects image quality tiers and rebalances signal weights:
@@ -81,42 +85,47 @@ The engine automatically detects image quality tiers and rebalances signal weigh
 
 ## 🏗️ Architecture
 
-```
-Ignition-Hackverse-DecodeX-/
-├── backend/                        # FastAPI + Python
-│   ├── main.py                     # App entry, CORS, /detect & /health routes
-│   ├── requirements.txt            # Python dependencies
-│   ├── detectors/
-│   │   ├── image_detector.py       # 5-signal ensemble fusion engine
-│   │   └── video_detector.py       # SigLIP2 batch frame analysis
-│   ├── utils/
-│   │   ├── result_builder.py       # Verdict, confidence & explanation builder
-│   │   └── forensics.py            # Deepfake analysis helper tools
-│   └── render.yaml                 # Render deployment configuration
-│
-├── frontend/                       # React 19 + Vite 8
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── src/
-│       ├── App.jsx                 # Router with nested dashboard layout
-│       ├── main.jsx
-│       ├── components/
-│       │   ├── DashboardLayout.jsx # Sidebar navigation + content area
-│       │   └── Layout.jsx          # Base layout wrapper
-│       └── pages/
-│           ├── Home.jsx            # Landing page
-│           ├── Login.jsx           # Authentication
-│           ├── Dashboard.jsx       # Overview & stats
-│           ├── Engine.jsx          # Core detection interface
-│           ├── LiveStream.jsx      # Real-time forensic monitor
-│           ├── Settings.jsx        # User preferences
-│           ├── ResetPassword.jsx   # Auth recovery flow
-│           └── About.jsx           # Project information
-│   ├── vercel.json                 # Vercel deployment routing config
-│   └── setup_vercel.py             # Automates Vercel deployment variables
-│
-└── README.md
+```mermaid
+graph TB
+    subgraph Frontend["🌐 Frontend (React 19 + Vite 8)"]
+        UI[Engine.jsx<br/>Drag-and-drop detection]
+        WS[LiveStream.jsx<br/>WebSocket real-time feed]
+        AUTH[Login.jsx<br/>Supabase Auth]
+    end
+
+    subgraph Backend["⚡ Backend (FastAPI)"]
+        API[main.py<br/>/analyze /events/{id} /live]
+        ORCH[agents/orchestrator.py<br/>LangGraph DAG]
+        VA[agents/visual_analyst.py<br/>Gemma 4 26B reasoning]
+        FC[agents/fact_checker.py<br/>RAG context retrieval]
+        ID[detectors/image_detector.py<br/>Heuristics + Gemma 4]
+        VD[detectors/video_detector.py<br/>Storyboard + Gemma 4]
+        FW[utils/forensics.py<br/>FFT · Wavelet · ELA · LBP · SRM]
+        RB[utils/result_builder.py<br/>Verdict builder]
+    end
+
+    subgraph External["☁️ External"]
+        GEMMA[Google AI<br/>Gemma 4 26B]
+        SUPABASE[Supabase<br/>Auth + pgvector RAG]
+        VERCEL[Vercel · Frontend]
+        RENDER[Render · Backend]
+    end
+
+    UI --> API
+    WS --> API
+    AUTH --> SUPABASE
+    API --> ORCH
+    ORCH --> ID & VD
+    ORCH --> VA
+    ORCH --> FC
+    ID --> FW
+    VD --> FW
+    ID --> GEMMA
+    VD --> GEMMA
+    VA --> GEMMA
+    FC --> SUPABASE
+    ID --> RB
+    VD --> RB
 ```
 
 ---
@@ -127,7 +136,7 @@ Ignition-Hackverse-DecodeX-/
 
 - **Python 3.10+** with pip
 - **Node.js 18+** with npm
-- ~2 GB disk space for AI model downloads (auto-fetched on first run)
+- **Google AI API key** — set as `GOOGLE_API_KEY` in `.env`
 
 ### 1. Clone the repository
 
@@ -144,9 +153,9 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The server loads both AI models on startup and listens at **`http://localhost:8000`**.
+The server initializes the Gemma 4 forensic engine and listens at **`http://localhost:8000`**.
 
-> ⚡ **First run** will download ~1.5 GB of model weights from HuggingFace. Subsequent starts use cached weights.
+> ⚡ **Requires a `GOOGLE_API_KEY`** in your `.env` file (Gemma 4 is accessed via Google AI Studio API). No local model weights needed.
 
 ### 3. Start the Frontend
 
@@ -171,37 +180,41 @@ Opens at **`http://localhost:5173`**.
 Liveness probe — confirms the server and models are ready.
 
 ```json
-{ "status": "ok", "version": "1.0.0", "model": "SigLIP2-Deepfake" }
+{ "status": "healthy", "timestamp": 1717000000.0 }
 ```
 
-### `POST /detect`
-Upload an image or video for deepfake analysis.
+### `POST /analyze`
+Upload an image or video for deepfake analysis. Returns a `task_id` for polling via SSE.
 
-**Request:** `multipart/form-data` with a `file` field  
-**Max file size:** 200 MB  
+**Request:** `multipart/form-data` with a `file` field (optional `query` text)  
+**Max file size:** 100 MB  
 **Supported formats:**
-- **Images:** JPEG, PNG, WebP, BMP, AVIF, HEIC, TIFF, GIF
-- **Videos:** MP4, MOV, AVI, WebM, MKV, OGG
+- **Images:** JPEG, PNG, WebP, BMP
+- **Videos:** MP4, MOV, WebM
 
-**Response:**
+**Response (SSE stream at `/events/{task_id}`):**
 ```json
 {
-  "prediction": "Authentic / Real",
-  "confidence": 0.8745,
-  "explanation": "Media verified as authentic based on forensic signatures. ...",
-  "breakdown": {
-    "model_score": 0.123,
-    "diffusion_score": 0.089,
-    "manipulation_score": 0.045,
-    "realism_score": 0.891,
-    "fourier_spectral": 0.067,
-    "wavelet_sig": 0.034,
-    "iris_consistency": 0.012,
-    "image_quality": 0.945
-  },
-  "media_type": "image",
-  "quality_tier": "high",
-  "processing_time_ms": 1247
+  "status": "Complete",
+  "result": {
+    "prediction": "Authentic / Real",
+    "confidence": 0.8745,
+    "explanation": "Gemma 4 forensic report explaining the verdict...",
+    "breakdown": {
+      "model_score": 0.123,
+      "diffusion_score": 0.089,
+      "manipulation_score": 0.045,
+      "realism_score": 0.891,
+      "fourier_spectral": 0.067,
+      "ela_score": 0.032,
+      "texture_score": 0.021,
+      "noise_score": 0.045,
+      "wavelet_sig": 0.034,
+      "iris_consistency": 0.012,
+      "geometric_alignment": 0.023,
+      "image_quality": 0.945
+    }
+  }
 }
 ```
 
@@ -209,35 +222,26 @@ Upload an image or video for deepfake analysis.
 
 ## 🧪 How Detection Works
 
-```
-Input Media
-    │
-    ▼
-┌─────────────────────────────────────┐
-│         Quality Assessment          │
-│  Blur · Grain · Saturation · Age   │
-└────────────────┬────────────────────┘
-                 │ (determines weight tier)
-    ┌────────────┴────────────┐
-    ▼                         ▼
-┌──────────┐       ┌──────────────────┐
-│ HF Model │       │ Forensic Signals │
-│ (Primary)│       │  FFT · Wavelet   │
-│ 55–85%   │       │  Face · EXIF     │
-└────┬─────┘       └────────┬─────────┘
-     │                      │
-     └──────────┬───────────┘
-                ▼
-     ┌──────────────────┐
-     │  Adaptive Fusion  │
-     │  Weighted Score   │
-     └────────┬─────────┘
-              ▼
-     ┌──────────────────┐
-     │  Verdict Engine   │
-     │  Label+Confidence │
-     │  +Explanation     │
-     └──────────────────┘
+```mermaid
+flowchart TD
+    INPUT["Input Media<br/>Image or Video"] --> QUALITY["Quality Assessment<br/>Blur · Grain · Saturation · Age"]
+    QUALITY --> TIER{"Quality Tier"}
+    TIER -->|High / Sharp| W1[Weight: 55% AI · 45% Heuristics]
+    TIER -->|Blurry| W2[Weight: 72% AI · 28% Heuristics]
+    TIER -->|Old / Film| W3[Weight: 75% AI · 25% Heuristics]
+    TIER -->|Low Quality| W4[Weight: 85% AI · 15% Heuristics]
+
+    W1 & W2 & W3 & W4 --> PARALLEL
+
+    subgraph PARALLEL["Parallel Analysis"]
+        HEURISTICS["Forensic Signals<br/>FFT · Log-Polar FFT<br/>Wavelet DWT · ELA<br/>LBP Texture · SRM Noise<br/>Face Symmetry · EXIF"]
+        GEMMA_VISION["Gemma 4 26B Vision<br/>Multimodal MoE<br/>Pixel-level artifact detection<br/>GAN/diffusion fingerprints"]
+    end
+
+    HEURISTICS --> FUSION
+    GEMMA_VISION --> FUSION
+
+    FUSION["Gemma 4 Reasoning Engine<br/>Cross-references heuristics + visual analysis<br/>Outputs structured JSON verdict"] --> VERDICT["Verdict Engine<br/>Label · Confidence Score<br/>Explainable Forensic Report"]
 ```
 
 ---
@@ -246,14 +250,16 @@ Input Media
 
 | Layer | Technology | Purpose |
 |:---|:---|:---|
+| **Multimodal AI** | Gemma 4 26B (`google-genai` SDK) | Native vision + heuristic fusion forensic reasoning |
+| **Agent Orchestration** | LangGraph | Multi-agent DAG: CV → Visual Analyst → Synthesis |
+| **RAG / Knowledge Base** | Supabase pgvector + `google-embedding-2` | Forensic knowledge retrieval |
 | **Frontend** | React 19, Vite 8, React Router 7 | SPA with monochrome forensic UI |
-| **Backend** | FastAPI, Uvicorn | Async REST API with hot-reload |
-| **AI Models** | HuggingFace Transformers, PyTorch | Image & video classification |
-| **Computer Vision** | OpenCV, MediaPipe | Frame extraction, face mesh |
+| **Backend** | FastAPI, Uvicorn | Async REST API with SSE streaming |
+| **Computer Vision** | OpenCV, MediaPipe | Frame extraction, face mesh landmarking |
 | **Signal Processing** | NumPy, SciPy, PyWavelets | FFT, DWT, spectral analysis |
 | **Metadata** | Piexif, Pillow | EXIF parsing, image I/O |
-| **Authentication & Auth** | Supabase API | Secured persistent user accounts, session handling |
-| **Deployment Environments** | Vercel, Render | Frontend CDN distribution and Serverless Backend hosting |
+| **Authentication** | Supabase API | Secured persistent user accounts, session handling |
+| **Deployment** | Vercel, Render | Frontend CDN + Serverless Backend hosting |
 
 ---
 
@@ -264,5 +270,5 @@ MIT License — see the [LICENSE](LICENSE) file for details.
 ---
 
 <p align="center">
-  Built with 🧠 and ☕ by <b>Team DecodeX</b> at <b>Hackverse × Ignition 2026</b>
+  Built with 🧠 and ☕ by <b>Team DecodeX</b> for <b>Gemma 4 Good Hackathon 2026</b>
 </p>

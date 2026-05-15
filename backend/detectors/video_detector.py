@@ -1,70 +1,101 @@
 """
-Video Detector — Framework-Less HF Inference API
-Model: prithivMLmods/Deepfake-Detect-Siglip2
-  - Frames extracted with OpenCV (1fps, max 10 frames)
-  - Per-frame HF Inference API call (No local GPU/CPU model needed)
-  - Batch performance through sequential API calls
+Video Detector — Gemma 4 Forensic Reasoning Engine
+- Storyboard generation from video frames
+- Gemma 4 26B multimodal temporal analysis
+- Strict model-based verdict
 """
 
 import io
 import os
-import time
-import requests
-import numpy as np
 import cv2
+import numpy as np
 from PIL import Image
-from utils.result_builder import build_result
-from utils.forensics import (
-    calculate_ela, calculate_lbp, calculate_srm, calculate_fft,
-    calculate_face_alignment, get_face_mesh, calculate_wavelet
-)
+
+try:
+    from utils.result_builder import build_result
+    from utils.forensics import (
+        calculate_ela, calculate_lbp, calculate_srm, calculate_fft,
+        calculate_face_alignment, get_face_mesh, calculate_wavelet
+    )
+except ImportError:
+    from backend.utils.result_builder import build_result
+    from backend.utils.forensics import (
+        calculate_ela, calculate_lbp, calculate_srm, calculate_fft,
+        calculate_face_alignment, get_face_mesh, calculate_wavelet
+    )
+
+from google import genai
+from google.genai import types
 
 # ── Configuration ────────────────────────────────────────────────────────────
-MODEL_ID = "prithivMLmods/Deepfake-Detect-Siglip2"
-API_URL  = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
-MAX_FRAMES     = 8           # Reduced for fast API turnaround
+MAX_FRAMES     = 8
 FRAME_INTERVAL = 1.0
+STORYBOARD_COLS = 4
 INPUT_SIZE     = 384
-OUTLIER_WEIGHT = 2.0
 
-def load_video_model():
-    """Stub for backwards compatibility in main.py lifespan."""
-    print("[VideoDetector] Runtime configured for HF-Inference-API (Serverless).")
+def query_gemma4_video(storyboard_bytes: bytes, heuristics: list) -> dict:
+    """Uses Gemma 4 26B (Multimodal MoE) for expert temporal reasoning on a video storyboard."""
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        return {"fake_probability": 0.5, "forensic_reasoning": "Gemma 4 API key missing."}
 
-def _get_api_headers():
-    token = os.getenv("HUGGINGFACE_API_KEY", "")
-    if token:
-        return {"Authorization": f"Bearer {token}"}
-    return {}
-
-# ── Main Entry ────────────────────────────────────────────────────────────────
+    client = genai.Client(api_key=api_key)
+    
+    # Summarize heuristics for the prompt
+    h_summary = []
+    for i, h in enumerate(heuristics):
+        h_summary.append(f"Frame {i+1}: FFT={h['fft']:.3f}, ELA={h['ela']:.3f}, Noise={h['srm']:.3f}")
+    
+    prompt = f"""
+    [TEMPORAL FORENSIC AUDIT]
+    You are the Gemma 4 Forensic Engine. Analyze this video storyboard (8 sampled frames).
+    
+    HEURISTIC TIMELINE:
+    {chr(10).join(h_summary)}
+    
+    YOUR OBJECTIVE:
+    1. Detect temporal flickering, frame-to-frame texture shifts, or artificial blending around facial boundaries.
+    2. Check for spectral anomalies (FFT spikes) that appear and disappear, indicating frame-based generative patching.
+    3. Verify if lip-sync or eye specularity remains consistent across the storyboard.
+    
+    Output a valid JSON only with:
+    {{
+      "fake_probability": float (0.0 to 1.0),
+      "forensic_reasoning": "A professional 2-3 sentence summary of the temporal forensic findings."
+    }}
+    """
+    
+    try:
+        response = client.models.generate_content(
+            model="gemma-4-26b-a4b-it",
+            contents=[
+                types.Part.from_bytes(data=storyboard_bytes, mime_type="image/jpeg"),
+                prompt
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
+        )
+        import json
+        return json.loads(response.text)
+    except Exception as e:
+        print(f"[Sentinel] Gemma 4 Video Error: {e}")
+        return {"fake_probability": 0.5, "forensic_reasoning": "Gemma 4 analysis failed."}
 
 def analyse_video(video_path: str) -> dict:
-    """Extract frames and send to HF Inference API with forensic aggregation."""
+    """Extract frames, create storyboard, and call Gemma 4."""
     # 1. Extract frames
     frames_pil = _extract_frames(video_path)
     if not frames_pil:
         return _fallback_result("Could not extract frames from video.")
 
-    print(f"[VideoDetector] Sampling {len(frames_pil)} frames for cloud inference...")
+    print(f"[VideoDetector] Sampling {len(frames_pil)} frames for storyboard analysis...")
     
-    # 2. Sequential Inference (Hugging Face API)
-    fake_probs = []
+    # 2. Extract Heuristics
     forensic_data = []
     face_mesh = get_face_mesh()
     
-    api_headers = _get_api_headers()
-
-    for idx, pil_img in enumerate(frames_pil):
-        # — ML Inference (API)
-        buf = io.BytesIO()
-        pil_img.save(buf, format="JPEG", quality=85)
-        img_bytes = buf.getvalue()
-        
-        prob = _query_api(img_bytes, api_headers)
-        fake_probs.append(prob)
-        
-        # — Local Forensic Heuristics
+    for pil_img in frames_pil:
         cv_frame = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
         alignment = 0.5
         if face_mesh:
@@ -82,44 +113,56 @@ def analyse_video(video_path: str) -> dict:
             "fft": calculate_fft(cv_frame)[0],
             "alignment": alignment
         })
-        
-        print(f"  frame {idx+1}/{len(frames_pil)} → P(Fake): {prob:.3f}")
 
-    # 3. Weighted Aggregation
-    composite, flicker, forensic_means = _weighted_aggregate(fake_probs, forensic_data)
+    # 3. Create Storyboard
+    storyboard = _create_storyboard(frames_pil)
+    buf = io.BytesIO()
+    storyboard.save(buf, format="JPEG", quality=85)
+    storyboard_bytes = buf.getvalue()
 
+    # 4. Call Gemma 4
+    gemma_result = query_gemma4_video(storyboard_bytes, forensic_data)
+    
+    # 5. Composite Scoring (Strictly model-based)
+    model_score = gemma_result.get("fake_probability", 0.5)
+    
+    # Calculate means for the breakdown (UI)
+    means = {k: float(np.mean([f[k] for f in forensic_data])) for k in forensic_data[0].keys()}
+    flicker = float(np.std([f["fft"] for f in forensic_data]) * 2.0)
+    
     breakdown = {
-        "diffusion_score":    round(max(composite, forensic_means["srm"]), 3),
-        "manipulation_score": round(max(composite * 0.9, flicker, forensic_means["alignment"]), 3),
-        "realism_score":      round(1.0 - composite, 3),
-        "fourier_spectral":   round(forensic_means["fft"], 3),
-        "temporal_flicker":   round(flicker, 3),
-        "ela_score":          round(forensic_means["ela"], 3),
-        "texture_score":      round(forensic_means["lbp"], 3),
-        "wavelet_sig":        round(forensic_means["wavelet"], 3),
-        "geometric_alignment": round(forensic_means["alignment"], 3),
+        "model_score":        round(model_score, 3),
+        "diffusion_score":    round(max(model_score, means["srm"]), 3),
+        "manipulation_score": round(max(model_score * 0.9, means["alignment"]), 3),
+        "realism_score":      round(1.0 - model_score, 3),
+        "fourier_spectral":   round(means["fft"], 3),
+        "temporal_flicker":   round(np.clip(flicker, 0.0, 1.0), 3),
+        "ela_score":          round(means["ela"], 3),
+        "texture_score":      round(means["lbp"], 3),
+        "wavelet_sig":        round(means["wavelet"], 3),
+        "geometric_alignment": round(means["alignment"], 3),
     }
 
-    result = build_result(composite, breakdown, media="video")
+    result = build_result(model_score, breakdown, media="video")
     result["frame_count"] = len(frames_pil)
+    result["explanation"] = gemma_result.get("forensic_reasoning", result["explanation"])
     return result
 
-
-# ── Internal Helpers ──────────────────────────────────────────────────────────
-
-def _query_api(img_bytes, headers):
-    try:
-        r = requests.post(API_URL, headers=headers, data=img_bytes, timeout=15)
-        if r.status_code == 200:
-            res = r.json()
-            labels = {item["label"].lower(): item["score"] for item in res}
-            # Model labels: "Fake" or "Real"
-            for k in ("fake", "deepfake", "synthetic"):
-                if k in labels: return float(labels[k])
-            if "real" in labels: return 1.0 - float(labels["real"])
-        return 0.5
-    except Exception:
-        return 0.5
+def _create_storyboard(frames: list) -> Image.Image:
+    """Combines frames into a grid."""
+    n = len(frames)
+    cols = STORYBOARD_COLS
+    rows = (n + cols - 1) // cols
+    
+    w, h = frames[0].size
+    grid = Image.new("RGB", (cols * w, rows * h))
+    
+    for i, frame in enumerate(frames):
+        r = i // cols
+        c = i % cols
+        grid.paste(frame, (c * w, r * h))
+        
+    return grid
 
 def _extract_frames(video_path: str) -> list:
     cap = cv2.VideoCapture(video_path)
@@ -139,24 +182,13 @@ def _extract_frames(video_path: str) -> list:
     cap.release()
     return frames
 
-def _weighted_aggregate(fake_probs, forensic_data):
-    if not fake_probs: return 0.5, 0.0, {k: 0.5 for k in ["ela","lbp","srm","fft","alignment","wavelet"]}
-    probs = np.array(fake_probs, dtype=float)
-    weights = np.where(probs >= 0.70, OUTLIER_WEIGHT, 1.0)
-    base_score = np.average(probs, weights=weights)
-    
-    means = {}
-    stds  = {}
-    for key in ["ela", "lbp", "srm", "fft", "alignment", "wavelet"]:
-        vals = np.array([f[key] for f in forensic_data])
-        means[key] = float(np.mean(vals))
-        stds[key]  = float(np.std(vals))
-        
-    flicker = np.std(probs) + np.mean(list(stds.values()))
-    flicker = np.clip(flicker * 2.0, 0.0, 1.0)
-    
-    final = np.clip(base_score + (flicker * 0.15), 0.0, 1.0)
-    return float(final), float(flicker), means
+def load_video_model():
+    """
+    Stub to initialize video detection configuration.
+    Called by main.py on startup.
+    """
+    print("[VideoDetector] Gemma 4 Forensic Engine Initialized.")
+    return True
 
 def _fallback_result(reason: str) -> dict:
     return {"prediction": "Error", "confidence": 0.0, "explanation": reason, "breakdown": {}, "frame_count": 0}

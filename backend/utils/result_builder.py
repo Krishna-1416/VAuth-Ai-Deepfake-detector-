@@ -124,6 +124,6 @@ def _explain(
         elif val < 0.20: parts.append(tips["low"])
 
     if media == "video":
-        parts.append(f"Analysis averaged across up to {15} sampled frames.")
+        parts.append("Analysis averaged across up to 15 sampled frames.")
 
     return " ".join(parts)

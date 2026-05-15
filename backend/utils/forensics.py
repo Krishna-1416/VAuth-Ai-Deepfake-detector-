@@ -110,7 +110,7 @@ def calculate_srm(cv_img: np.ndarray) -> float:
     except Exception:
         return 0.5
 
-def calculate_fft(cv_img: np.ndarray) -> (float, float):
+def calculate_fft(cv_img: np.ndarray) -> tuple[float, float]:
     """FFT High-Frequency Anomaly + Log-Polar FFT Variance."""
     try:
         gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)

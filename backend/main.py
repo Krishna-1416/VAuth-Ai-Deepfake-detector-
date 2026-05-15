@@ -6,12 +6,15 @@ V-Auth — FastAPI Deepfake Detection Backend (Compact Edition)
 """
 
 import os
+import sys
 import time
 import tempfile
 import asyncio
 import base64
 import requests
 import uvicorn
+import json
+from typing import Optional, List, Union, Any
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
@@ -22,11 +25,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from detectors.image_detector import analyse_image
-from detectors.video_detector import analyse_video, load_video_model
-from utils.local_model import load_local_model, get_model_info
+from detectors.video_detector import analyse_video
+
+# Integrate Forensic Orchestrator (Gemma 4 powered)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from agents.orchestrator import ForensicOrchestrator
 
 # Load environment variables
 load_dotenv()
+
+# Instantiate Orchestrator
+orchestrator = ForensicOrchestrator()
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
@@ -40,31 +49,16 @@ _supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup - optionally preload local HF model for faster inference."""
-    print("[Sentinel] Starting up...")
-    load_video_model()  # Configures hints for video detector
-    
-    # Try to preload local model (non-blocking if it fails)
-    use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
-    if use_local:
-        print("[Sentinel] Preloading local HuggingFace model...")
-        try:
-            load_local_model()
-            info = get_model_info()
-            print(f"[Sentinel] Local model ready: {info['model_name']} on {info['device']}")
-        except Exception as e:
-            print(f"[Sentinel] Local model preload skipped: {e}")
-    else:
-        print("[Sentinel] Local model disabled (USE_LOCAL_MODEL=false)")
-    
+    """Startup - V-Auth Forensic Engine."""
+    print("[V-Auth] Starting up...")
     yield
-    print("[Sentinel] Shutting down.")
+    print("[V-Auth] Shutting down.")
 
 # ── App ───────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="V-Auth — Deepfake Detection API",
-    version="1.1.0",
+    title="V-Auth — Deepfake Detection API (Gemma 4 Edition)",
+    version="1.2.0",
     lifespan=lifespan,
 )
 
@@ -81,21 +75,71 @@ app.add_middleware(
 
 security = HTTPBearer()
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Optimized Auth using the global client's auth methods."""
+async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))):
+    """Optional Auth: Returns user if token is valid, else returns a guest identity."""
+    if not credentials:
+        return None # Guest
+    
     token = credentials.credentials
     try:
         user = _supabase_client.auth.get_user(token)
-        if not user:
-            raise HTTPException(401, "Invalid session")
         return user
-    except Exception as e:
-        raise HTTPException(401, f"Auth Failed: {str(e)}")
+    except Exception:
+        return None # Invalid token also treated as guest
 
 # — Constants ─────────────────────────────────────────────────────────────────
 MAX_FILE_SIZE_MB = 100
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/bmp"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm"}
+
+# ── Routes ────────────────────────────────────────────────────────────────────
+
+import uuid
+from sse_starlette.sse import EventSourceResponse
+
+# ── State ─────────────────────────────────────────────────────────────────────
+tasks = {}
+
+async def run_analysis_task(task_id: str, contents: bytes, mime: str, filename: str, user_id: str, token: str):
+    tasks[task_id]["status"] = "processing"
+    
+    media_type = "video" if mime in ALLOWED_VIDEO_TYPES else "image"
+    query = f"Perform a deepfake forensic analysis on this {media_type}."
+    
+    try:
+        # Use Orchestrator stream
+        async for update in orchestrator.run_forensic_analysis_stream(query, contents, media_type, mime):
+            if update["status"] == "failed":
+                raise Exception(update["error"])
+            
+            if update["status"] == "Complete":
+                result = update["result"]
+                tasks[task_id]["result"] = result
+                tasks[task_id]["status"] = "completed"
+                tasks[task_id]["logs"].append("Forensic report generated.")
+                
+                # Persist to DB
+                try:
+                    if token:
+                        _supabase_client.auth.set_session(token, refresh_token="")
+                    _supabase_client.table("scans").insert({
+                        "user_id": user_id,
+                        "file_name": filename,
+                        "media_type": media_type,
+                        "prediction": result.get("prediction", "Unknown"),
+                        "confidence": result.get("confidence", 0.5),
+                        "explanation": result.get("explanation", ""),
+                        "breakdown": result.get("breakdown", {})
+                    }).execute()
+                except Exception as db_err:
+                    print(f"[V-Auth] DB Error: {db_err}")
+            else:
+                tasks[task_id]["logs"].append(update["message"])
+        
+    except Exception as e:
+        print(f"[V-Auth] Task {task_id} Failed: {e}")
+        tasks[task_id]["status"] = "failed"
+        tasks[task_id]["logs"].append(f"Error: {str(e)}")
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -105,71 +149,83 @@ async def root():
 
 @app.get("/health")
 async def health():
-    model_info = get_model_info()
-    return {
-        "status": "healthy", 
-        "mode": "hybrid_inference" if model_info["loaded"] else "api_only", 
-        "local_model": model_info,
-        "timestamp": time.time()
-    }
+    return {"status": "healthy", "timestamp": time.time()}
 
-
-@app.post("/detect")
-async def detect(
-    file: UploadFile = File(...), 
-    credentials: HTTPAuthorizationCredentials = Depends(security), 
+@app.post("/analyze")
+async def analyze_v2(
+    file: UploadFile = File(...),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
     user=Depends(get_current_user)
 ):
-    t_start = time.time()
-    print(f"[Sentinel] Incoming request: /detect from user {user.user.id if user else 'Unknown'}")
-
+    task_id = str(uuid.uuid4())
     contents = await file.read()
-    size_mb = len(contents) / (1024 * 1024)
-    if size_mb > MAX_FILE_SIZE_MB:
-        raise HTTPException(413, f"File size ({size_mb:.1f}MB) exceeds limit.")
+    
+    tasks[task_id] = {
+        "status": "queued",
+        "logs": ["Task queued for processing..."],
+        "result": None
+    }
+    
+    user_id = user.user.id if user and hasattr(user, 'user') else "guest"
+    token = credentials.credentials if credentials else None
+    
+    # Start background task
+    asyncio.create_task(run_analysis_task(
+        task_id, contents, file.content_type, file.filename, user_id, token
+    ))
+    
+    return {"task_id": task_id}
 
-    mime = file.content_type or ""
+@app.post("/analyze/video")
+async def analyze_video_v2(
+    file: UploadFile = File(...),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+    user=Depends(get_current_user)
+):
+    return await analyze_v2(file, credentials, user)
 
-    # — Process Image
-    if mime in ALLOWED_IMAGE_TYPES:
-        result = await asyncio.to_thread(analyse_image, contents, mime)
-        result["media_type"] = "image"
+@app.get("/events/{task_id}")
+async def events(task_id: str):
+    async def event_generator():
+        last_log_idx = 0
+        while True:
+            if task_id not in tasks:
+                yield {"event": "error", "data": "Task not found"}
+                break
+            
+            task = tasks[task_id]
+            
+            # Send new logs
+            while last_log_idx < len(task["logs"]):
+                yield {
+                    "data": json.dumps({
+                        "status": "processing", 
+                        "message": task["logs"][last_log_idx]
+                    })
+                }
+                last_log_idx += 1
+            
+            if task["status"] == "completed":
+                yield {
+                    "data": json.dumps({
+                        "status": "Complete", 
+                        "result": task["result"]
+                    })
+                }
+                break
+            
+            if task["status"] == "failed":
+                yield {
+                    "data": json.dumps({
+                        "status": "failed", 
+                        "message": "Analysis failed"
+                    })
+                }
+                break
+                
+            await asyncio.sleep(0.1)
 
-    # — Process Video
-    elif mime in ALLOWED_VIDEO_TYPES:
-        suffix = _ext_from_mime(mime)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp.write(contents)
-            tmp_path = tmp.name
-        try:
-            result = await asyncio.to_thread(analyse_video, tmp_path)
-            result["media_type"] = "video"
-        finally:
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
-
-    else:
-        raise HTTPException(415, f"Unsupported Content-Type: {mime}")
-
-    result["processing_time_ms"] = round((time.time() - t_start) * 1000)
-
-    # — Persist forensic report (Fire & Forget to DB)
-    try:
-        # Re-use global client but authenticated with the user's token for RLS
-        _supabase_client.postgrest.auth(credentials.credentials) 
-        _supabase_client.table("scans").insert({
-            "user_id": user.user.id,
-            "file_name": file.filename,
-            "media_type": result["media_type"],
-            "prediction": result["prediction"],
-            "confidence": result["confidence"],
-            "explanation": result.get("explanation", ""),
-            "breakdown": result.get("breakdown", {})
-        }).execute()
-    except Exception as e:
-        print(f"[Sentinel] DB Insert Error: {e}")
-
-    return JSONResponse(result)
+    return EventSourceResponse(event_generator())
 
 
 @app.websocket("/live")
@@ -203,7 +259,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        print(f"[Sentinel] WS Error: {e}")
+        print(f"[V-Auth] WS Error: {e}")
 
 
 def _ext_from_mime(mime: str) -> str:
