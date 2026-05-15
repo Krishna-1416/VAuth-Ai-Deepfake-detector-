@@ -118,8 +118,8 @@ The engine automatically detects image quality tiers and rebalances signal weigh
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Krishna-1416/Ignition-Hackverse-DecodeX-.git
-cd Ignition-Hackverse-DecodeX-
+git clone https://github.com/Krishna-1416/VAuth-Ai-Deepfake-detector-.git
+cd VAuth-Ai-Deepfake-detector-
 ```
 
 ### 2. Start the Backend
@@ -239,5 +239,5 @@ flowchart TD
 | **Deployment** | Vercel, Render | Frontend CDN + Serverless Backend hosting |
 
 <p align="center">
-  Built with 🧠 and ☕ by <b>Team DecodeX</b> for <b>Gemma 4 Good Hackathon 2026</b>
+  Built with 🧠 and ☕ by <b>Jadhav Krishna</b> for <b>Gemma 4 Good Hackathon 2026</b>
 </p>
