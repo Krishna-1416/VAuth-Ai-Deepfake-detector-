@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 const Home = () => {
   const [activeSection, setActiveSection] = useState('platform');
@@ -34,7 +35,7 @@ const Home = () => {
       <nav className="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl transition-all duration-300">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-8 py-4">
           <div className="text-xl font-bold tracking-tighter text-slate-950 font-headline flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary-container">shield_person</span>
+            <Logo className="w-8 h-8" />
             V Auth
           </div>
           

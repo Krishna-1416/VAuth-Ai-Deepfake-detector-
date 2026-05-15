@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import Logo from './Logo';
 
 const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -14,7 +15,8 @@ const DashboardLayout = () => {
   return (
     <>
       <header className={`fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl h-16 border-b border-slate-200/20 transition-all duration-300 ${isSidebarOpen ? 'lg:pl-72' : 'lg:pl-28'}`}>
-        <div className="flex justify-center items-center h-full">
+        <div className="flex justify-center items-center h-full gap-2">
+          <Logo className="w-8 h-8" />
           <span className="text-xl font-black tracking-tighter text-slate-950 uppercase tracking-widest">V-Auth</span>
         </div>
       </header>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import Logo from '../components/Logo';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -89,9 +90,7 @@ const Login = () => {
         </div>
 
         <NavLink to="/" className="flex items-center gap-3 relative z-10 group">
-          <div className="w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center rounded-lg group-hover:bg-white/20 transition-all">
-            <span className="material-symbols-outlined text-white text-2xl">shield_person</span>
-          </div>
+          <Logo className="w-10 h-10 drop-shadow-2xl" white />
           <span className="font-headline font-extrabold text-2xl tracking-tighter">V Auth</span>
         </NavLink>
 
@@ -110,9 +109,7 @@ const Login = () => {
       <div className="flex-1 flex flex-col justify-center px-8 md:px-24 bg-surface py-20 relative">
         <div className="lg:hidden absolute top-10 left-10">
           <NavLink to="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 bg-primary-container text-white flex items-center justify-center rounded-xl">
-              <span className="material-symbols-outlined text-xl">shield_person</span>
-            </div>
+            <Logo className="w-10 h-10" />
             <span className="font-headline font-extrabold text-xl tracking-tighter text-primary">V Auth</span>
           </NavLink>
         </div>
@@ -120,9 +117,10 @@ const Login = () => {
         <div className="max-w-md w-full mx-auto">
           <div className="mb-10 text-center">
             {/* Capsule Toggle */}
-            <div className="inline-grid grid-cols-2 p-1 bg-surface-container-low rounded-2xl border border-outline-variant/10 mb-10 relative w-64 mx-auto">
+            <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl border border-slate-200 mb-10 relative w-64 mx-auto overflow-hidden">
               <div 
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary-container rounded-xl transition-all duration-300 ease-out shadow-lg ${isRegistering ? 'left-1/2' : 'left-1'}`}
+                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary-container rounded-xl transition-all duration-300 ease-out shadow-lg ${isRegistering ? 'translate-x-full' : 'translate-x-0'}`}
+                style={{ left: '4px' }}
               ></div>
               <button
                 onClick={() => setIsRegistering(false)}
