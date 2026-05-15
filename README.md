@@ -75,44 +75,51 @@ The engine automatically detects image quality tiers and rebalances signal weigh
 ## 🏗️ Architecture
 
 ```mermaid
+%%{init: {'flowchart': {'nodeSpacing': 60, 'rankSpacing': 60}}}%%
 graph TB
+
     subgraph Frontend["🌐 Frontend (React 19 + Vite 8)"]
-        UI[Engine.jsx<br/>Drag-and-drop detection]
-        WS[LiveStream.jsx<br/>WebSocket real-time feed]
-        AUTH[Login.jsx<br/>Supabase Auth]
+        UI["Engine.jsx — Drag-and-drop detection"]
+        WS["LiveStream.jsx — WebSocket real-time feed"]
+        AUTH["Login.jsx — Supabase Auth"]
     end
 
     subgraph Backend["⚡ Backend (FastAPI)"]
-        API["main.py<br/>POST /analyze · GET /events/{id} · WS /live"]
-        ORCH[agents/orchestrator.py<br/>LangGraph DAG]
-        VA[agents/visual_analyst.py<br/>Gemma 4 26B reasoning]
-        FC[agents/fact_checker.py<br/>RAG context retrieval]
-        ID[detectors/image_detector.py<br/>Heuristics + Gemma 4]
-        VD[detectors/video_detector.py<br/>Storyboard + Gemma 4]
-        FW[utils/forensics.py<br/>FFT · Wavelet · ELA · LBP · SRM]
-        RB[utils/result_builder.py<br/>Verdict builder]
+        API["main.py — REST + SSE + WebSocket"]
+        ORCH["orchestrator.py — LangGraph multi-agent DAG"]
+        VA["visual_analyst.py — Gemma 4 26B reasoning"]
+        FC["fact_checker.py — RAG forensic context retrieval"]
+        ID["image_detector.py — Heuristics + Gemma 4 fusion"]
+        VD["video_detector.py — Storyboard + Gemma 4 analysis"]
+        FW["forensics.py — FFT · Wavelet · ELA · LBP · SRM"]
+        RB["result_builder.py — Verdict assembly"]
     end
 
-    subgraph External["☁️ External"]
-        GEMMA[Google AI<br/>Gemma 4 26B]
-        SUPABASE[Supabase<br/>Auth + pgvector RAG]
-        VERCEL[Vercel · Frontend]
-        RENDER[Render · Backend]
+    subgraph External["☁️ External Services"]
+        GEMMA["Google AI — Gemma 4 26B (MoE)"]
+        SUPABASE["Supabase — Auth + pgvector RAG"]
     end
 
     UI --> API
     WS --> API
     AUTH --> SUPABASE
+
     API --> ORCH
-    ORCH --> ID & VD
+
+    ORCH --> ID
+    ORCH --> VD
     ORCH --> VA
     ORCH --> FC
+
     ID --> FW
     VD --> FW
+
     ID --> GEMMA
     VD --> GEMMA
     VA --> GEMMA
+
     FC --> SUPABASE
+
     ID --> RB
     VD --> RB
 ```
