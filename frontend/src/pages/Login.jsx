@@ -15,6 +15,7 @@ const Login = () => {
   const [statusMsg, setStatusMsg] = useState('');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [stayAuthenticated, setStayAuthenticated] = useState(true);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -247,9 +248,11 @@ const Login = () => {
               </div>
 
               <div className="flex items-center justify-between py-2">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-5 h-5 border-2 border-slate-200 rounded-lg flex items-center justify-center group-hover:border-primary transition-colors overflow-hidden">
-                    <div className="w-2.5 h-2.5 bg-primary rounded-sm opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                <label className="flex items-center gap-3 cursor-pointer group select-none" onClick={() => setStayAuthenticated(!stayAuthenticated)}>
+                  <div className={`w-5 h-5 border-2 rounded-lg flex items-center justify-center transition-all overflow-hidden ${stayAuthenticated ? 'bg-primary-container border-primary-container' : 'border-slate-200 group-hover:border-primary'}`}>
+                    {stayAuthenticated && (
+                      <span className="material-symbols-outlined text-white text-[14px] leading-none font-bold">check</span>
+                    )}
                   </div>
                   <span className="text-xs font-bold tracking-tight text-slate-500 group-hover:text-primary transition-colors uppercase">Stay Authenticated</span>
                 </label>
