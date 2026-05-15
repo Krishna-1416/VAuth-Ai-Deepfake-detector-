@@ -238,14 +238,6 @@ flowchart TD
 | **Authentication** | Supabase API | Secured persistent user accounts, session handling |
 | **Deployment** | Vercel, Render | Frontend CDN + Serverless Backend hosting |
 
----
-
-## 📄 License
-
-MIT License — see the [LICENSE](LICENSE) file for details.
-
----
-
 <p align="center">
   Built with 🧠 and ☕ by <b>Team DecodeX</b> for <b>Gemma 4 Good Hackathon 2026</b>
 </p>
