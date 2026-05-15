@@ -1,7 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 
 const Home = () => {
+  const [activeSection, setActiveSection] = useState('platform');
+
+  useEffect(() => {
+    const sections = [
+      { id: 'platform', el: document.getElementById('platform') },
+      { id: 'forensic-stack', el: document.getElementById('forensic-stack') },
+      { id: 'visual-proof', el: document.getElementById('visual-proof') },
+    ];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter(e => e.isIntersecting);
+        if (visible.length > 0) {
+          const topMost = visible.reduce((prev, curr) =>
+            curr.boundingClientRect.top < prev.boundingClientRect.top ? curr : prev
+          );
+          const section = sections.find(s => s.el === topMost.target);
+          if (section) setActiveSection(section.id);
+        }
+      },
+      { threshold: 0.2, rootMargin: '-80px 0px 0px 0px' }
+    );
+
+    sections.forEach(s => { if (s.el) observer.observe(s.el); });
+    return () => observer.disconnect();
+  }, []);
   return (
     <div className="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* TopAppBar Navigation */}
@@ -13,9 +39,9 @@ const Home = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-8 font-manrope font-medium tracking-tight">
-            <a className="text-slate-950 font-semibold border-b-2 border-slate-950 pb-1" href="#">Platform</a>
-            <a className="text-slate-500 hover:text-slate-900 transition-colors duration-200" href="#forensic-stack">Technology</a>
-            <a className="text-slate-500 hover:text-slate-900 transition-colors duration-200" href="#visual-proof">Solutions</a>
+            <a className={`pb-1 transition-all duration-200 ${activeSection === 'platform' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#platform" onClick={(e) => { e.preventDefault(); document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth' }); }}>Platform</a>
+            <a className={`pb-1 transition-all duration-200 ${activeSection === 'forensic-stack' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#forensic-stack" onClick={(e) => { e.preventDefault(); document.getElementById('forensic-stack')?.scrollIntoView({ behavior: 'smooth' }); }}>Technology</a>
+            <a className={`pb-1 transition-all duration-200 ${activeSection === 'visual-proof' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#visual-proof" onClick={(e) => { e.preventDefault(); document.getElementById('visual-proof')?.scrollIntoView({ behavior: 'smooth' }); }}>Solutions</a>
           </div>
 
           <div className="flex items-center gap-4">
@@ -39,7 +65,7 @@ const Home = () => {
 
       <main className="pt-32">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-8 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <section id="platform" className="max-w-7xl mx-auto px-8 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-left duration-1000">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-surface-container-low border border-outline-variant/10">
               <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim mr-2 animate-pulse"></span>
