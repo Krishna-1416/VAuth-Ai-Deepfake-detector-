@@ -117,10 +117,10 @@ const Login = () => {
         <div className="max-w-md w-full mx-auto">
           <div className="mb-10 text-center">
             {/* Capsule Toggle */}
-            <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl border border-slate-200 mb-10 relative w-64 mx-auto overflow-hidden">
+            <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl border border-slate-200 mb-10 relative w-64 mx-auto">
               <div 
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary-container rounded-xl transition-all duration-300 ease-out shadow-lg ${isRegistering ? 'translate-x-full' : 'translate-x-0'}`}
-                style={{ left: '4px' }}
+                className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary-container rounded-xl transition-all duration-300 ease-out shadow-lg"
+                style={{ left: isRegistering ? 'calc(50% + 2px)' : '2px' }}
               ></div>
               <button
                 onClick={() => setIsRegistering(false)}
