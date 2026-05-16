@@ -12,9 +12,9 @@ const Dashboard = () => {
   };
   const [stats, setStats] = useState([
     { label: 'MEDIA SCANNED', value: '...', icon: 'analytics', trend: 'LIVE' },
-    { label: 'SYNTHETIC DETECTED', value: '...', icon: 'report_problem', trend: 'LIVE' },
-    { label: 'ACTIVE MONITORS', value: '04', icon: 'visibility', trend: 'STABLE' },
-    { label: 'SYSTEM ACCURACY', value: '99.4%', icon: 'verified', trend: 'HIGH' },
+    { label: 'REAL DETECTED', value: '...', icon: 'verified', trend: 'LIVE' },
+    { label: 'FAKE DETECTED', value: '...', icon: 'report_problem', trend: 'LIVE' },
+    { label: 'SYSTEM ACCURACY', value: '...', icon: 'verified', trend: '...' },
   ]);
   const [recentScans, setRecentScans] = useState([]);
   const [allScans, setAllScans] = useState([]);
@@ -44,13 +44,23 @@ const Dashboard = () => {
 
       // 3. Update Stats
       const totalStr = scans.length.toLocaleString();
-      const syntheticStr = scans.filter(s => normalizeLabel(s.prediction) === 'Fake').length.toLocaleString();
+      const fakeCount = scans.filter(s => normalizeLabel(s.prediction) === 'Fake').length.toLocaleString();
+      const realCount = scans.filter(s => normalizeLabel(s.prediction) === 'Real').length.toLocaleString();
+
+      // Calculate System Accuracy as average confidence across all scans
+      const avgConfidence = scans.length > 0
+        ? (scans.reduce((sum, s) => sum + (s.confidence || 0), 0) / scans.length * 100).toFixed(1) + '%'
+        : '0.0%';
+      const avgConfNum = scans.length > 0
+        ? scans.reduce((sum, s) => sum + (s.confidence || 0), 0) / scans.length * 100
+        : 0;
+      const accuracyTrend = avgConfNum >= 90 ? 'HIGH' : avgConfNum >= 70 ? 'MEDIUM' : 'LOW';
 
       setStats(prev => [
         { ...prev[0], value: totalStr },
-        { ...prev[1], value: syntheticStr },
-        prev[2],
-        prev[3]
+        { ...prev[1], value: realCount },
+        { ...prev[2], value: fakeCount },
+        { ...prev[3], value: avgConfidence, trend: accuracyTrend }
       ]);
 
       // 4. Update Recent Activity Feed
