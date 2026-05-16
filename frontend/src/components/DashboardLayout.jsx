@@ -44,18 +44,13 @@ const DashboardLayout = () => {
             <span className="material-symbols-outlined">dashboard</span>
             {isSidebarOpen && <span className="font-inter text-sm font-bold whitespace-nowrap uppercase tracking-widest">Dashboard</span>}
           </NavLink>
+        </nav>
 
+        <div className="pt-4 mt-auto border-t border-slate-100 space-y-1 flex flex-col items-stretch">
           <NavLink to="/settings" className={({ isActive }) => `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${isActive ? 'bg-primary-container text-white shadow-lg shadow-primary-container/20' : 'text-slate-600 hover:bg-slate-100'} ${isSidebarOpen ? '' : 'justify-center w-12 h-12'}`}>
              <span className="material-symbols-outlined">settings</span>
              {isSidebarOpen && <span className="font-inter text-sm font-bold whitespace-nowrap uppercase tracking-widest">Settings</span>}
           </NavLink>
-        </nav>
-
-        <div className="pt-4 mt-auto border-t border-slate-100 space-y-1 flex flex-col items-stretch">
-          <a className={`flex items-center gap-3 p-3 text-slate-500 hover:text-slate-900 transition-colors ${isSidebarOpen ? '' : 'justify-center w-12 h-12 self-center'}`} href="#">
-            <span className="material-symbols-outlined">help</span>
-            {isSidebarOpen && <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Support</span>}
-          </a>
           <button 
             onClick={handleSignOut}
             className={`flex items-center gap-3 p-3 text-slate-500 hover:text-red-600 transition-colors ${isSidebarOpen ? '' : 'justify-center w-12 h-12 self-center'}`}

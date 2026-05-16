@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
 const Settings = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -59,6 +61,15 @@ const Settings = () => {
       console.error('Update failed:', err);
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out failed:', error);
     }
   };
 
@@ -206,6 +217,17 @@ const Settings = () => {
                 </button>
               </div>
             </form>
+
+            {/* Sign Out - Mobile only */}
+            <div className="mt-12 pt-8 border-t border-slate-100 lg:hidden">
+              <button 
+                onClick={handleSignOut}
+                className="w-full py-4 bg-red-600 text-white rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-red-600/20 hover:bg-red-700"
+              >
+                <span className="material-symbols-outlined text-lg">logout</span>
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </div>
