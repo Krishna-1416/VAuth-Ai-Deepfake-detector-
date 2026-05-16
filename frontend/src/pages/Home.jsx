@@ -4,6 +4,12 @@ import Logo from '../components/Logo';
 
 const Home = () => {
   const [activeSection, setActiveSection] = useState('platform');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const scrollToSection = (id) => {
+    setMobileMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const sections = [
@@ -33,35 +39,53 @@ const Home = () => {
     <div className="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* TopAppBar Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl transition-all duration-300">
-        <div className="flex justify-between items-center max-w-7xl mx-auto px-8 py-4">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 md:px-8 py-4">
           <div className="text-xl font-bold tracking-tighter text-slate-950 font-headline flex items-center gap-2">
             <Logo className="w-8 h-8" />
             V Auth
           </div>
           
           <div className="hidden md:flex items-center gap-8 font-manrope font-medium tracking-tight">
-            <a className={`pb-1 transition-all duration-200 ${activeSection === 'platform' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#platform" onClick={(e) => { e.preventDefault(); document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth' }); }}>Platform</a>
-            <a className={`pb-1 transition-all duration-200 ${activeSection === 'visual-proof' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#visual-proof" onClick={(e) => { e.preventDefault(); document.getElementById('visual-proof')?.scrollIntoView({ behavior: 'smooth' }); }}>Solutions</a>
-            <a className={`pb-1 transition-all duration-200 ${activeSection === 'forensic-stack' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`} href="#forensic-stack" onClick={(e) => { e.preventDefault(); document.getElementById('forensic-stack')?.scrollIntoView({ behavior: 'smooth' }); }}>Technology</a>
+            <button onClick={() => scrollToSection('platform')} className={`pb-1 transition-all duration-200 ${activeSection === 'platform' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`}>Platform</button>
+            <button onClick={() => scrollToSection('visual-proof')} className={`pb-1 transition-all duration-200 ${activeSection === 'visual-proof' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`}>Solutions</button>
+            <button onClick={() => scrollToSection('forensic-stack')} className={`pb-1 transition-all duration-200 ${activeSection === 'forensic-stack' ? 'text-slate-950 font-semibold border-b-2 border-slate-950' : 'text-slate-500 hover:text-slate-900'}`}>Technology</button>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <NavLink 
               to="/login" 
               state={{ mode: 'register' }}
-              className="text-slate-500 font-medium hover:text-slate-900"
+              className="hidden sm:inline text-slate-500 font-medium hover:text-slate-900 text-sm"
             >
               Register
             </NavLink>
             <NavLink 
               to="/login"
               state={{ mode: 'login' }}
-              className="bg-primary-container text-white text-sm px-6 py-2.5 rounded-xl font-semibold transition-all active:opacity-80 active:scale-95 shadow-[0_4px_12px_rgba(0,20,83,0.1)] hover:shadow-lg hover:shadow-primary-container/20"
+              className="bg-primary-container text-white text-sm px-4 md:px-6 py-2.5 rounded-xl font-semibold transition-all active:opacity-80 active:scale-95 shadow-[0_4px_12px_rgba(0,20,83,0.1)] hover:shadow-lg hover:shadow-primary-container/20"
             >
               Sign In
             </NavLink>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden w-11 h-11 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors active:scale-95"
+              aria-label="Toggle menu"
+            >
+              <span className="material-symbols-outlined text-2xl text-slate-800">
+                {mobileMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
           </div>
         </div>
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-slate-50/95 backdrop-blur-xl border-t border-slate-200/50 animate-fade-in">
+            <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-2">
+              <button onClick={() => scrollToSection('platform')} className="w-full text-left px-4 py-3 rounded-xl text-slate-700 font-semibold hover:bg-slate-100 active:scale-[0.98] transition-all">Platform</button>
+              <button onClick={() => scrollToSection('visual-proof')} className="w-full text-left px-4 py-3 rounded-xl text-slate-700 font-semibold hover:bg-slate-100 active:scale-[0.98] transition-all">Solutions</button>
+              <button onClick={() => scrollToSection('forensic-stack')} className="w-full text-left px-4 py-3 rounded-xl text-slate-700 font-semibold hover:bg-slate-100 active:scale-[0.98] transition-all">Technology</button>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="pt-32">

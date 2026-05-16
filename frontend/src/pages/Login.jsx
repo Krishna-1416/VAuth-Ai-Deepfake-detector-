@@ -235,7 +235,7 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 inset-y-0 my-auto text-slate-400 hover:text-primary transition-colors flex items-center justify-center w-10 h-10"
+                      className="absolute right-4 inset-y-0 my-auto text-slate-400 hover:text-primary transition-colors flex items-center justify-center w-11 h-11"
                     >
                       <span className="material-symbols-outlined text-[22px] leading-none">
                         {showPassword ? 'visibility_off' : 'visibility'}

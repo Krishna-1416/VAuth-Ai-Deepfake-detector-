@@ -293,19 +293,19 @@ const Engine = () => {
         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cancel & Reset Scan</span>
       </div>
 
-      <div className="flex justify-between items-end mb-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-4">
+        <div className="min-w-0">
           <nav className="flex gap-2 text-xs font-medium text-slate-400 mb-2">
             <span>Forensics</span>
             <span>/</span>
             <span className="text-slate-900">Active Analysis</span>
           </nav>
-          <h1 className="text-3xl font-extrabold tracking-tight">{selectedFile.name}</h1>
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight truncate">{selectedFile.name}</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">
              Size: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Format: {selectedFile.type}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 shrink-0">
           {!isAnalyzing && !analysisResult && (
             <button 
               onClick={handleDetect}
@@ -363,18 +363,16 @@ const Engine = () => {
             <div className="p-5 rounded-2xl border bg-white shadow-lg animate-in slide-in-from-bottom-3 duration-500">
               <div className="flex items-center justify-between mb-3">
                 <span className={`text-lg font-black uppercase tracking-wider ${
-                  analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                  analysisResult.prediction?.toLowerCase().includes('fake')
                     ? 'text-red-600'
-                    : analysisResult.prediction.includes('Manipulated')
-                    ? 'text-amber-600'
                     : 'text-emerald-600'
                 }`}>
                   <span className="material-symbols-outlined text-lg align-text-bottom mr-1.5" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    {analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                    {analysisResult.prediction?.toLowerCase().includes('fake')
                       ? 'dangerous'
                       : 'verified_user'}
                   </span>
-                  {analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                  {analysisResult.prediction?.toLowerCase().includes('fake')
                     ? 'FAKE'
                     : 'REAL'}
                 </span>
@@ -385,10 +383,8 @@ const Engine = () => {
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-1000 ${
-                    analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                    analysisResult.prediction?.toLowerCase().includes('fake')
                       ? 'bg-red-500'
-                      : analysisResult.prediction.includes('Manipulated')
-                      ? 'bg-amber-500'
                       : 'bg-emerald-500'
                   }`}
                   style={{ width: `${Math.round(analysisResult.confidence * 100)}%` }}
@@ -439,24 +435,20 @@ const Engine = () => {
                 <>
                   {/* ── Verdict card with confidence bar ── */}
                   <div className={`p-5 rounded-2xl border border-white shadow-xl animate-in zoom-in-95 duration-500 ${
-                      analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                      analysisResult.prediction?.toLowerCase().includes('fake')
                         ? 'bg-gradient-to-br from-red-50 to-rose-50/30'
-                        : analysisResult.prediction.includes('Manipulated')
-                        ? 'bg-gradient-to-br from-amber-50 to-orange-50/30'
                         : 'bg-gradient-to-br from-emerald-50 to-teal-50/30'
                     }`}>
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2">
                           <span className={`material-symbols-outlined text-[20px] ${
-                            analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'text-red-600' : 'text-emerald-600'
+                            analysisResult.prediction?.toLowerCase().includes('fake') ? 'text-red-600' : 'text-emerald-600'
                           }`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                            {analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'dangerous' : 'verified_user'}
+                            {analysisResult.prediction?.toLowerCase().includes('fake') ? 'dangerous' : 'verified_user'}
                           </span>
                           <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${
-                            analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic')
+                            analysisResult.prediction?.toLowerCase().includes('fake')
                               ? 'text-red-700'
-                              : analysisResult.prediction.includes('Manipulated')
-                              ? 'text-amber-700'
                               : 'text-emerald-700'
                           }`}>
                             FORENSIC_VERDICT
@@ -480,7 +472,7 @@ const Engine = () => {
                          <div className="flex-1 h-1.5 bg-white/60 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-1000 ${
-                                analysisResult.prediction.includes('Diffusion') || analysisResult.prediction.includes('Synthetic') ? 'bg-red-500' : 'bg-emerald-500'
+                                analysisResult.prediction?.toLowerCase().includes('fake') ? 'bg-red-500' : 'bg-emerald-500'
                               }`}
                               style={{ width: `${Math.round(analysisResult.confidence * 100)}%` }}
                             />

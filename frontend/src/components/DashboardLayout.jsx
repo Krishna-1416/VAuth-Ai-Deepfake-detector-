@@ -66,25 +66,25 @@ const DashboardLayout = () => {
         </div>
       </aside>
       
-      <main className={`pt-16 min-h-screen transition-all duration-300 ${isSidebarOpen ? 'lg:pl-72' : 'lg:pl-28'}`}>
+      <main className={`pt-16 pb-16 md:pb-0 min-h-screen transition-all duration-300 ${isSidebarOpen ? 'lg:pl-72' : 'lg:pl-28'}`}>
         <Outlet />
       </main>
 
       <footer className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg flex justify-around items-center h-16 z-50 px-4 border-t border-slate-100">
-        <NavLink to="/engine" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
-          <span className="material-symbols-outlined text-[20px]">policy</span>
+        <NavLink to="/engine" className={({ isActive }) => `flex flex-col items-center justify-center gap-0.5 min-w-12 min-h-12 rounded-xl ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
+          <span className="material-symbols-outlined text-[24px]">policy</span>
           <span className="text-[10px] font-bold">SCAN</span>
         </NavLink>
-        <NavLink to="/live" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
-          <span className="material-symbols-outlined text-[20px]">smart_card_reader</span>
+        <NavLink to="/live" className={({ isActive }) => `flex flex-col items-center justify-center gap-0.5 min-w-12 min-h-12 rounded-xl ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
+          <span className="material-symbols-outlined text-[24px]">smart_card_reader</span>
           <span className="text-[10px] font-bold">LIVE</span>
         </NavLink>
-        <NavLink to="/dashboard" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
-          <span className="material-symbols-outlined text-[20px]">dashboard</span>
+        <NavLink to="/dashboard" className={({ isActive }) => `flex flex-col items-center justify-center gap-0.5 min-w-12 min-h-12 rounded-xl ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
+          <span className="material-symbols-outlined text-[24px]">dashboard</span>
           <span className="text-[10px] font-bold">INFO</span>
         </NavLink>
-        <NavLink to="/settings" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
-          <span className="material-symbols-outlined text-[20px]">settings</span>
+        <NavLink to="/settings" className={({ isActive }) => `flex flex-col items-center justify-center gap-0.5 min-w-12 min-h-12 rounded-xl ${isActive ? 'text-slate-950' : 'text-slate-400'}`}>
+          <span className="material-symbols-outlined text-[24px]">settings</span>
           <span className="text-[10px] font-bold">SETTINGS</span>
         </NavLink>
       </footer>
