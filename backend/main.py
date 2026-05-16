@@ -14,6 +14,7 @@ import base64
 import requests
 import uvicorn
 import json
+import hashlib
 from typing import Optional, List, Union, Any
 from dotenv import load_dotenv
 
@@ -123,7 +124,53 @@ async def run_analysis_task(task_id: str, contents: bytes, mime: str, filename: 
     
     media_type = "video" if mime in ALLOWED_VIDEO_TYPES else "image"
     query = f"Perform a deepfake forensic analysis on this {media_type}."
+    file_hash = hashlib.sha256(contents).hexdigest()
     
+    # 1. Check Cache
+    try:
+        if token:
+            _supabase_client.auth.set_session(token, refresh_token="")
+        
+        cache_response = await asyncio.to_thread(
+            lambda: _supabase_client.table("scans").select("*").eq("file_hash", file_hash).limit(1).execute()
+        )
+        
+        if cache_response.data and len(cache_response.data) > 0:
+            cached_result = cache_response.data[0]
+            result = {
+                "prediction": cached_result.get("prediction", "Unknown"),
+                "confidence": cached_result.get("confidence", 0.5),
+                "explanation": cached_result.get("explanation", ""),
+                "breakdown": cached_result.get("breakdown", {})
+            }
+            
+            tasks[task_id]["logs"].append("Cache hit! Retrieved previous forensic analysis.")
+            tasks[task_id]["result"] = result
+            tasks[task_id]["status"] = "completed"
+            
+            # Persist to user's history so it still shows up in their dashboard
+            try:
+                await asyncio.to_thread(
+                    lambda: _supabase_client.table("scans").insert({
+                        "user_id": user_id,
+                        "file_name": filename,
+                        "media_type": media_type,
+                        "prediction": result["prediction"],
+                        "confidence": result["confidence"],
+                        "explanation": result["explanation"],
+                        "breakdown": result["breakdown"],
+                        "file_hash": file_hash
+                    }).execute()
+                )
+            except Exception as db_err:
+                print(f"[V-Auth] DB Error (Cache Insert): {db_err}")
+                
+            return # Exit early!
+            
+    except Exception as e:
+        print(f"[V-Auth] Cache check skipped or failed (Column 'file_hash' might be missing): {e}")
+
+    # 2. Run Analysis
     try:
         # Use Orchestrator stream
         async for update in orchestrator.run_forensic_analysis_stream(query, contents, media_type, mime):
@@ -147,7 +194,8 @@ async def run_analysis_task(task_id: str, contents: bytes, mime: str, filename: 
                         "prediction": result.get("prediction", "Unknown"),
                         "confidence": result.get("confidence", 0.5),
                         "explanation": result.get("explanation", ""),
-                        "breakdown": result.get("breakdown", {})
+                        "breakdown": result.get("breakdown", {}),
+                        "file_hash": file_hash
                     }).execute()
                 except Exception as db_err:
                     print(f"[V-Auth] DB Error: {db_err}")
