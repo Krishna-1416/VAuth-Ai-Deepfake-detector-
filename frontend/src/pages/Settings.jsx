@@ -190,12 +190,13 @@ const Settings = () => {
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">SYSTEM EMAIL</label>
                   <div className="relative">
                     <input 
-                      className="w-full bg-slate-100 border border-slate-200 rounded-xl p-4 text-slate-500 font-medium cursor-not-allowed outline-none" 
+                      className="w-full bg-slate-100 border border-slate-200 rounded-xl p-4 pr-12 text-slate-500 font-medium cursor-not-allowed outline-none" 
                       type="email" 
                       value={profile.email}
                       readOnly
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-slate-100 to-transparent pointer-events-none rounded-r-xl"></div>
+                    <div className="absolute right-4 inset-y-0 flex items-center">
                       <span className="material-symbols-outlined text-slate-400 text-lg">lock</span>
                     </div>
                   </div>
