@@ -133,7 +133,7 @@ def analyse_image(raw_bytes: bytes, mime: str) -> dict:
         "image_quality":      round(quality["blur_score"], 3),
     }
 
-    result = build_result(heuristic_composite, breakdown, media="image")
+    result = build_result(heuristic_composite, breakdown, media="image", quality=tier)
     result["quality_tier"] = tier
     result["explanation"] = gemma_result.get("forensic_reasoning", result["explanation"])
     return result

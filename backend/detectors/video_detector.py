@@ -126,10 +126,18 @@ def analyse_video(video_path: str) -> dict:
     # 5. Composite Scoring (Strictly model-based)
     model_score = gemma_result.get("fake_probability", 0.5)
     
-    # Calculate means for the breakdown (UI)
+    # Calculate means and quality for the breakdown (UI)
     means = {k: float(np.mean([f[k] for f in forensic_data])) for k in forensic_data[0].keys()}
     flicker = float(np.std([f["fft"] for f in forensic_data]) * 2.0)
     
+    # Assess overall video quality
+    quality_results = [_assess_frame_quality(cv2.cvtColor(np.array(f), cv2.COLOR_RGB2BGR)) for f in frames_pil]
+    avg_blur = np.mean([q["blur_score"] for q in quality_results])
+    
+    # Determine consensus tier
+    tiers = [q["tier"] for q in quality_results]
+    video_tier = max(set(tiers), key=tiers.count) # Majority vote
+
     breakdown = {
         "model_score":        round(model_score, 3),
         "diffusion_score":    round(max(model_score, means["srm"]), 3),
@@ -141,12 +149,25 @@ def analyse_video(video_path: str) -> dict:
         "texture_score":      round(means["lbp"], 3),
         "wavelet_sig":        round(means["wavelet"], 3),
         "geometric_alignment": round(means["alignment"], 3),
+        "video_quality":      round(avg_blur, 3),
     }
 
-    result = build_result(model_score, breakdown, media="video")
+    result = build_result(model_score, breakdown, media="video", quality=video_tier)
     result["frame_count"] = len(frames_pil)
+    result["quality_tier"] = video_tier
     result["explanation"] = gemma_result.get("forensic_reasoning", result["explanation"])
     return result
+
+def _assess_frame_quality(cv_img: np.ndarray) -> dict:
+    gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+    laplacian_var = cv2.Laplacian(gray, cv2.CV_32F).var()
+    blur_score = float(np.clip(laplacian_var / 500.0, 0.0, 1.0))
+    
+    if laplacian_var < 30:    tier = "low"
+    elif laplacian_var < 100: tier = "blurry"
+    else:                     tier = "high"
+    
+    return {"tier": tier, "blur_score": blur_score}
 
 def _create_storyboard(frames: list) -> Image.Image:
     """Combines frames into a grid."""

@@ -9,16 +9,16 @@ Converts a composite 0–1 fake score into:
 import math
 from typing import Literal
 
-# Strict Binary Threshold (0.40 Core)
-# Add ambiguous zone (0.35-0.45) for cases where confidence is low
-_BANDS = [
-    (0.30, "Synthetic / Deepfake"),
-    (0.00, "Authentic / Real"),
-]
-
-# When composite score is in ambiguous zone (±0.05 of threshold), 
-# and only forensics available, flag more conservatively
-_AMBIGUOUS_THRESHOLD_RANGE = (0.35, 0.45)
+# Dynamic Threshold Configuration
+# For high quality media, we use a higher threshold (0.35) to avoid false positives.
+# For low quality/blurry media, we use a lower threshold (0.25) to be more sensitive to hidden artifacts.
+_QUALITY_THRESHOLDS = {
+    "high":    0.45,
+    "medium":  0.42,
+    "low":     0.40,
+    "blurry":  0.38
+}
+_DEFAULT_THRESHOLD = 0.42
 
 # Signal-specific explanation snippets
 _SIGNAL_TIPS = {
@@ -74,47 +74,60 @@ def build_result(
     composite_raw: float,
     breakdown: dict,
     media: Literal["image", "video"] = "image",
+    quality: str = "medium"
 ) -> dict:
     fused_score = float(max(0.0, min(1.0, composite_raw)))
-    prediction = _label(fused_score)
-    confidence = _confidence(fused_score, prediction)
-    explanation = _explain(fused_score, breakdown, prediction, media)
+    
+    # Dynamic Threshold Selection
+    threshold = _QUALITY_THRESHOLDS.get(quality, _DEFAULT_THRESHOLD)
+    
+    prediction = "Synthetic / Deepfake" if fused_score >= threshold else "Authentic / Real"
+    confidence = _confidence(fused_score, threshold)
+    explanation = _explain(fused_score, breakdown, threshold, media, quality)
 
     return {
         "prediction":  prediction,
         "confidence":  round(confidence, 4),
         "explanation": explanation,
+        "threshold_used": threshold,
+        "quality_detected": quality,
         "breakdown":   {k: round(v, 3) for k, v in breakdown.items()},
     }
 
 
-def _label(score: float) -> str:
-    for threshold, label in _BANDS:
-        if score >= threshold:
-            return label
-    return "Real"
-
-
-def _confidence(score: float, prediction: str) -> float:
-    if score >= 0.30:
-        conf = 0.50 + (score - 0.30) / 0.70 * 0.49
+def _confidence(score: float, threshold: float) -> float:
+    """Calculates confidence based on distance from the dynamic threshold."""
+    if score >= threshold:
+        # Scale score from [threshold, 1.0] to [0.50, 0.99]
+        conf = 0.50 + (score - threshold) / (1.0 - threshold + 1e-6) * 0.49
     else:
-        conf = 0.50 + (0.30 - score) / 0.30 * 0.49
+        # Scale score from [0.0, threshold] to [0.99, 0.50]
+        conf = 0.50 + (threshold - score) / (threshold + 1e-6) * 0.49
     return float(max(0.50, min(0.99, conf)))
 
 
 def _explain(
     composite: float,
     breakdown: dict,
-    prediction: str,
+    threshold: float,
     media: str,
+    quality: str
 ) -> str:
     parts = []
-    if composite >= 0.30:
-        parts.append("Synthetic indicators detected above the forensic threshold.")
+    
+    # 1. Primary Verdict
+    if composite >= threshold:
+        parts.append(f"Synthetic indicators detected above the {quality} quality forensic threshold ({threshold}).")
     else:
-        parts.append("Media verified as authentic based on forensic signatures.")
+        parts.append(f"Media verified as authentic based on {quality} quality forensic baseline.")
 
+    # 2. Quality context
+    if quality in ["low", "blurry"]:
+        parts.append("Note: Analysis sensitivity increased due to low media quality.")
+    elif quality == "high":
+        parts.append("High-fidelity analysis confirms forensic stability.")
+
+    # 3. Signal-specific tips
     for sig_key, tips in _SIGNAL_TIPS.items():
         val = breakdown.get(sig_key, None)
         if val is None: continue
@@ -124,6 +137,7 @@ def _explain(
         elif val < 0.20: parts.append(tips["low"])
 
     if media == "video":
-        parts.append("Analysis averaged across up to 15 sampled frames.")
+        parts.append("Analysis averaged across multiple sampled frames.")
 
     return " ".join(parts)
+
