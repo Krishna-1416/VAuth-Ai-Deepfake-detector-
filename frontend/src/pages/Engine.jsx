@@ -221,9 +221,6 @@ const Engine = () => {
       <div className="p-8 h-[calc(100vh-8rem)] flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-500">
         <div className="w-full max-w-3xl">
           <div className="mb-8 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200/50">
-              <span className="material-symbols-outlined text-3xl text-slate-600" style={{ fontVariationSettings: "'FILL' 1" }}>policy</span>
-            </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 mb-2">V-AUTH Deepfake Forensic Scan</h1>
             <p className="text-slate-500 font-medium">Upload media for AI spectral & spatial analysis.</p>
           </div>
@@ -404,10 +401,6 @@ const Engine = () => {
                 </div>
                 DETECTION_STREAM
               </h2>
-              <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                CORE_ENGINE_ACTIVE
-              </span>
             </div>
             <div className="flex-1 overflow-y-auto space-y-4 pr-2">
               {isAnalyzing && logs.length === 0 && (
